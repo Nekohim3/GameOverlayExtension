@@ -77,7 +77,7 @@ namespace GameOverlayExtension.UI
             else
                 g.Graphics.OutlineFillRectangle(StrokeBrush, FillBrush, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
 
-            g.Graphics.DrawText(Text, Font, FontBrush, Rect.X, Rect.Y);
+            g.Graphics.DrawText(Text, Font, FontBrush, Rect.X, Rect.Y, Rect.Width, Rect.Height);
         }
 
         public override void OnMouseDown(DxControl ctl, MouseEventArgs args, Point pt)

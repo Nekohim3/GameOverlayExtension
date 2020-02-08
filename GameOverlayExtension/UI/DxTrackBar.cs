@@ -128,7 +128,7 @@ namespace GameOverlayExtension.UI
                 ParagraphAlignment = ParagraphAlignment.Center,
             };
 
-            Text = new TextHelper("")
+            _valueText = new TextHelper("")
             {
                 TextAlignment = TextAlignment.Trailing,
                 ParagraphAlignment = ParagraphAlignment.Center,
@@ -178,8 +178,8 @@ namespace GameOverlayExtension.UI
             //g.Graphics.DrawText(Math.Round(Value, 2).ToString(), Rect.X + 7, Rect.Y + 5, Rect.Width - 14, Rect.Height - 10, Font, FontBrush, ta: TextAlignment.Trailing, pa: ParagraphAlignment.Center);
             
             _valueText.Text = Math.Round(Value, 2).ToString();
-            g.Graphics.DrawText(Text, Font, FontBrush, Rect.X + 7, Rect.Y + 5, Rect.Width - 14, Rect.Height - 10, false);
-            g.Graphics.DrawText(_valueText, Font, FontBrush, Rect.X + 7, Rect.Y + 5, Rect.Width - 14, Rect.Height - 10, false);
+            g.Graphics.DrawText(Text, Font, FontBrush, Rect.X + 7, Rect.Y + 5, Rect.Width - 14, Rect.Height - 10);
+            g.Graphics.DrawText(_valueText, Font, FontBrush, Rect.X + 7, Rect.Y + 5, Rect.Width - 14, Rect.Height - 10);
         }
 
         public override bool IntersectTest(int x, int y)

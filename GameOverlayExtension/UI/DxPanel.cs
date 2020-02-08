@@ -7,7 +7,7 @@ namespace GameOverlayExtension.UI
         public SolidBrush FillBrush { get; set; }
         public SolidBrush StrokeBrush { get; set; }
 
-        public DxPanel(string name, string text) : base(name)
+        public DxPanel(string name) : base(name)
         {
             Width = 100;
             Height = 100;

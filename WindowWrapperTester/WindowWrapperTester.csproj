@@ -33,10 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GameOverlay, Version=4.0.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\GameOverlay.Net\source\GameOverlay\bin\Release\net45\GameOverlay.dll</HintPath>
-    </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
     </Reference>
@@ -89,6 +85,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\GameOverlay.Net\source\GameOverlay\GameOverlay.csproj">
+      <Project>{8cf5b91f-44f7-4cef-be68-d87d9339fa37}</Project>
+      <Name>GameOverlay</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GameOverlayExtension\GameOverlayExtension.csproj">
       <Project>{f4fb7ddd-429b-4d2d-874e-388ac4eeb659}</Project>
       <Name>GameOverlayExtension</Name>

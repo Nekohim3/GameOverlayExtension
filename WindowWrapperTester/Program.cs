@@ -10,13 +10,17 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
 using GameOverlay.Drawing;
 using GameOverlay.Windows;
+
 using GameOverlayExtension;
 using GameOverlayExtension.UI;
+
 using SharpDX.DirectWrite;
 using SharpDX.IO;
 using SharpDX.WIC;
+
 using FontCollection = GameOverlayExtension.FontCollection;
 using HorizontalAlignment = GameOverlayExtension.UI.HorizontalAlignment;
 
@@ -28,8 +32,14 @@ namespace WindowWrapperTester
 
         static void MsgBox()
         {
-            Form f = new Form { WindowState = FormWindowState.Maximized, FormBorderStyle = FormBorderStyle.None, Opacity = 0 };
-            f.Load += (sender, args) => { MessageBox.Show("Возникла непредвиденная ошибка! Детали находятся в файле Exception.txt", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); };
+            Form f = new Form {WindowState = FormWindowState.Maximized, FormBorderStyle = FormBorderStyle.None, Opacity = 0};
+
+            f.Load += (sender, args) =>
+            {
+                MessageBox.Show("Возникла непредвиденная ошибка! Детали находятся в файле Exception.txt", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                f.Close();
+            };
+
             f.TopMost = true;
             f.Show();
         }
@@ -43,23 +53,23 @@ namespace WindowWrapperTester
             g.Overlay = new WindowWrapper(100, 100, 1280, 720)
             {
                 UseHook = true,
-                Window = { Title = "Test" },
-
+                Window  = {Title = "Test"},
             };
-            g.Overlay.OnGraphicsSetup += Overlay_OnGraphicsSetup;
+
+            g.Overlay.OnGraphicsSetup   += Overlay_OnGraphicsSetup;
             g.Overlay.OnGraphicsDestroy += Overlay_OnGraphicsDestroy;
 
             g.Overlay.OnPreDraw += Overlay_OnPreDraw;
-            g.Overlay.OnDraw += Overlay_OnDraw;
+            g.Overlay.OnDraw    += Overlay_OnDraw;
 
             g.Overlay.OnKeyDown += Overlay_OnKeyDown;
-            g.Overlay.OnKeyUp += Overlay_OnKeyUp;
+            g.Overlay.OnKeyUp   += Overlay_OnKeyUp;
 
-            g.Overlay.OnMouseDown += Overlay_OnMouseDown;
-            g.Overlay.OnMouseUp += Overlay_OnMouseUp;
-            g.Overlay.OnMouseMove += Overlay_OnMouseMove;
+            g.Overlay.OnMouseDown  += Overlay_OnMouseDown;
+            g.Overlay.OnMouseUp    += Overlay_OnMouseUp;
+            g.Overlay.OnMouseMove  += Overlay_OnMouseMove;
             g.Overlay.OnMouseWheel += Overlay_OnMouseWheel;
-            g.Graphics = g.Overlay.Window.Graphics;
+            g.Graphics             =  g.Overlay.Window.Graphics;
             g.Overlay.Run();
 
             Loaded = true;
@@ -71,23 +81,21 @@ namespace WindowWrapperTester
 
         #region overlay events
 
-        private static Image bmp;
-        private static int qq = 0;
-        private static int ww = 0;
-        private static DxLabel l;
-        private static DxLabel l1;
-        private static DxTextBox textbox;
-        private static DxTextBox textbox1;
+        private static Image      bmp;
+        private static int        qq = 0;
+        private static int        ww = 0;
+        private static DxLabel    l;
+        private static DxLabel    l1;
+        private static DxTextBox  textbox;
+        private static DxTextBox  textbox1;
         private static DxTrackBar tb;
+
         private static void Overlay_OnGraphicsSetup(object sender, SetupGraphicsEventArgs e)
         {
-
-
             //textbox = new DxTextBox("2", "qwertyuiop[]asdfghjkl;'zxcvbnm,./1234567890") { Margin = new Thickness(650, 10, 0, 0), Width = 550 };
             //textbox1 = new DxTextBox("2", "qwertyuiop[]asdfghjkl;'zxcvbnm,./1234567890".ToUpperInvariant()) { Margin = new Thickness(650, 35, 0, 0), Width = 550 };
             //Controls.Add(textbox);
             //Controls.Add(textbox1);
-
 
             //l1 = new DxLabel("1", $"{g.Graphics.MeasureText(textbox.Text.Substring(0, textbox.CaretPos + 1), FontCollection.Get("Control.Font").Font).Width}") { Margin = new Thickness(10, 35, 0, 0), Width = 200 };
             //Controls.Add(l1);
@@ -112,26 +120,76 @@ namespace WindowWrapperTester
             //var q = new DxImage("", bmp){Margin = new Thickness(10,10,0,0), Width = 200, Height = 200};
             //Controls.Add(q);
 
-
             var button = new DxButton("button", "Test")
             {
-                
+                Margin = new Thickness(10, 10, 0, 0)
             };
 
-            button.Click += btn => {MsgBox(); };
+            button.Click += btn =>
+            {
+                //MsgBox();
+            };
 
             Controls.Add(button);
+
+            var image = new DxImage("image", new Image(g.Graphics.GetRenderTarget(), "q.png")) {Width = 50, Height = 75, Margin = new Thickness(100, 10, 0, 0)};
+            Controls.Add(image);
+
+            var panel = new DxPanel("panel")
+            {
+                Width       = 50,
+                Height      = 75,
+                Margin      = new Thickness(100, 10, 0, 0),
+                StrokeBrush = BrushCollection.Get("Control.Stroke").Brush
+            };
+            Controls.Add(panel);
+
+            var imagebutton = new DxImageButton("imagebutton", new Image(g.Graphics.GetRenderTarget(), "q.png")) { Width = 50, Height = 75, Margin = new Thickness(200, 10, 0, 0) };
+            imagebutton.Click += btn =>
+            {
+                //MsgBox();
+            };
+            Controls.Add(imagebutton);
+
+            var label = new DxLabel("label", "text"){Margin = new Thickness(300,10,0,0)};
+            Controls.Add(label);
+
+            var textbox = new DxTextBox("textbox", "test")
+            {
+                Width = 100,
+                Margin = new Thickness(100,150,0,0)
+            };
+            Controls.Add(textbox);
+
+            var toggle = new DxToggle("toggle", "test toggle")
+            {
+                Width = 200,
+                Margin = new Thickness(100,200,0,0),
+                IsActive = true
+            };
+            Controls.Add(toggle);
+
+            var trackbar = new DxTrackBar("trackbar", "trackbar test")
+            {
+                Width = 200,
+                Max = 250,
+                Min = 0,
+                IsSnapToTick = true, 
+                TickRate = 1,
+                Margin = new Thickness(100,250,0,0)
+            };
+            Controls.Add(trackbar);
         }
 
         private static void Overlay_OnGraphicsDestroy(object sender, DestroyGraphicsEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnPreDraw(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
+
             //l.Text = $"{g.Graphics.MeasureText(textbox.Text.Substring(0, textbox.CaretPos), FontCollection.Get("Control.Font").Font).Width}";
             //l1.Text = $"{g.Graphics.MeasureText(textbox.Text.Substring(0, textbox.CaretPos + 1), FontCollection.Get("Control.Font").Font).Width}";
         }
@@ -146,37 +204,31 @@ namespace WindowWrapperTester
         private static void Overlay_OnKeyDown(object sender, KeyEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnKeyUp(object sender, KeyEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnMouseDown(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnMouseUp(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnMouseMove(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         private static void Overlay_OnMouseWheel(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-
         }
 
         #endregion
