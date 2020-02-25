@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowWrapperTester", "Wind
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameOverlay", "..\GameOverlay.Net\source\GameOverlay\GameOverlay.csproj", "{8CF5B91F-44F7-4CEF-BE68-D87D9339FA37}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OverlayWrapperTester", "OverlayWrapperTester\OverlayWrapperTester.csproj", "{C0041A0C-0CBD-4D64-9D7A-B5A513E0BD32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{8CF5B91F-44F7-4CEF-BE68-D87D9339FA37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CF5B91F-44F7-4CEF-BE68-D87D9339FA37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CF5B91F-44F7-4CEF-BE68-D87D9339FA37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0041A0C-0CBD-4D64-9D7A-B5A513E0BD32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0041A0C-0CBD-4D64-9D7A-B5A513E0BD32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0041A0C-0CBD-4D64-9D7A-B5A513E0BD32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0041A0C-0CBD-4D64-9D7A-B5A513E0BD32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

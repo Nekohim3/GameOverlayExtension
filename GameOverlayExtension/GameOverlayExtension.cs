@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -90,11 +91,59 @@ namespace GameOverlayExtension
             GHook.MouseMove  += GHook_MouseMove;
             GHook.MouseWheel += GHook_MouseWheel;
 
-#if !DEBUG
-            AppDomain.CurrentDomain.UnhandledException += (sender, args) => { Process.GetCurrentProcess().Kill(); };
-#endif
+            //#if !DEBUG
+            AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+            Application.ThreadException += UnhandledException;
+            //#endif
         }
 
+        public virtual void StopHook()
+        {
+            GHook.Dispose();
+        }
+
+        public virtual void UnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            StopHook();
+            var e = args.ExceptionObject as Exception;
+
+            var exStr =
+                $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
+
+            using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
+            using (var sw = new StreamWriter(fs))
+                sw.Write(exStr);
+            MsgBox();
+            Process.GetCurrentProcess().Kill();
+        }
+
+        public virtual void UnhandledException(object sender, ThreadExceptionEventArgs args)
+        {
+            StopHook();
+            var e = args.Exception;
+
+            var exStr =
+                $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
+
+            using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
+            using (var sw = new StreamWriter(fs))
+                sw.Write(exStr);
+            MsgBox();
+            Process.GetCurrentProcess().Kill();
+        }
+        static void MsgBox()
+        {
+            Form f = new Form { WindowState = FormWindowState.Maximized, FormBorderStyle = FormBorderStyle.None, Opacity = 0, ShowInTaskbar = false};
+
+            f.Load += (sender, args) =>
+            {
+                MessageBox.Show("Возникла непредвиденная ошибка! Детали находятся в файле Exception.txt", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                f.Close();
+            };
+
+            f.TopMost = true;
+            f.Show();
+        }
         internal abstract void GHook_KeyDown(object sender, KeyEventArgs e);
 
         internal abstract void GHook_KeyUp(object sender, KeyEventArgs e);

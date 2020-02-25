@@ -17,6 +17,7 @@ using GameOverlay.Windows;
 using GameOverlayExtension;
 using GameOverlayExtension.UI;
 
+using SharpDX;
 using SharpDX.DirectWrite;
 using SharpDX.IO;
 using SharpDX.WIC;
@@ -24,7 +25,7 @@ using SharpDX.WIC;
 using FontCollection = GameOverlayExtension.FontCollection;
 using HorizontalAlignment = GameOverlayExtension.UI.HorizontalAlignment;
 
-namespace WindowWrapperTester
+namespace OverlayWrapperTester
 {
     static class Program
     {
@@ -36,7 +37,7 @@ namespace WindowWrapperTester
         [STAThread]
         static void Main()
         {
-            g.Overlay = new WindowWrapper(100, 100, 1280, 720)
+            g.Overlay = new OverlayWrapper(100, 100, 1280, 720)
             {
                 UseHook = true,
                 Window  = {Title = "Test"},
@@ -59,9 +60,9 @@ namespace WindowWrapperTester
             g.Overlay.Run();
 
             Loaded = true;
-            var tt = new Timer {Interval = 3000};
-            tt.Tick += (sender, args) => throw new Exception();
-            tt.Start();
+            //var tt = new Timer {Interval = 3000};
+            //tt.Tick += (sender, args) => throw new Exception();
+            //tt.Start();
             Application.Run();
         }
 
@@ -98,63 +99,63 @@ namespace WindowWrapperTester
             //var q = new DxImage("", bmp){Margin = new Thickness(10,10,0,0), Width = 200, Height = 200};
             //Controls.Add(q);
 
-            var button = new DxButton("button", "Test")
-            {
-                Margin = new Thickness(10, 10, 0, 0)
-            };
+            //var button = new DxButton("button", "Test")
+            //{
+            //    Margin = new Thickness(10, 10, 0, 0)
+            //};
 
-            button.Click += btn =>
-            {
-                //MsgBox();
-            };
+            //button.Click += btn =>
+            //{
+            //    //MsgBox();
+            //};
 
-            Controls.Add(button);
+            //Controls.Add(button);
 
-            var image = new DxImage("image", new Image(g.Graphics.GetRenderTarget(), "q.png")) {Width = 50, Height = 75, Margin = new Thickness(100, 10, 0, 0)};
-            Controls.Add(image);
+            //var image = new DxImage("image", new Image(g.Graphics.GetRenderTarget(), "q.png")) {Width = 50, Height = 75, Margin = new Thickness(100, 10, 0, 0)};
+            //Controls.Add(image);
 
-            var panel = new DxPanel("panel")
-            {
-                Width       = 50,
-                Height      = 75,
-                Margin      = new Thickness(100, 10, 0, 0),
-                StrokeBrush = BrushCollection.Get("Control.Stroke").Brush
-            };
-            Controls.Add(panel);
+            //var panel = new DxPanel("panel")
+            //{
+            //    Width       = 50,
+            //    Height      = 75,
+            //    Margin      = new Thickness(100, 10, 0, 0),
+            //    StrokeBrush = BrushCollection.Get("Control.Stroke").Brush
+            //};
+            //Controls.Add(panel);
 
-            var imagebutton = new DxImageButton("imagebutton", new Image(g.Graphics.GetRenderTarget(), "q.png")) { Width = 50, Height = 75, Margin = new Thickness(200, 10, 0, 0) };
-            imagebutton.Click += btn =>
-            {
-                //MsgBox();
-            };
-            Controls.Add(imagebutton);
+            //var imagebutton = new DxImageButton("imagebutton", new Image(g.Graphics.GetRenderTarget(), "q.png")) { Width = 50, Height = 75, Margin = new Thickness(200, 10, 0, 0) };
+            //imagebutton.Click += btn =>
+            //{
+            //    //MsgBox();
+            //};
+            //Controls.Add(imagebutton);
 
-            var label = new DxLabel("label", "text"){Margin = new Thickness(300,10,0,0)};
-            Controls.Add(label);
+            //var label = new DxLabel("label", "text"){Margin = new Thickness(300,10,0,0)};
+            //Controls.Add(label);
 
-            var textbox = new DxTextBox("textbox", "test")
-            {
-                Width = 100,
-                Margin = new Thickness(100,150,0,0)
-            };
-            Controls.Add(textbox);
+            //var textbox = new DxTextBox("textbox", "test")
+            //{
+            //    Width = 100,
+            //    Margin = new Thickness(100,150,0,0)
+            //};
+            //Controls.Add(textbox);
 
-            var toggle = new DxToggle("toggle", "test toggle")
-            {
-                Width = 200,
-                Margin = new Thickness(100,200,0,0),
-                IsActive = true
-            };
-            Controls.Add(toggle);
+            //var toggle = new DxToggle("toggle", "test toggle")
+            //{
+            //    Width = 200,
+            //    Margin = new Thickness(100,200,0,0),
+            //    IsActive = true
+            //};
+            //Controls.Add(toggle);
 
             var trackbar = new DxTrackBar("trackbar", "trackbar test")
             {
                 Width = 200,
                 Max = 250,
                 Min = 0,
-                IsSnapToTick = true, 
+                IsSnapToTick = true,
                 TickRate = 1,
-                Margin = new Thickness(100,250,0,0)
+                Margin = new Thickness(100, 250, 0, 0)
             };
             Controls.Add(trackbar);
         }
@@ -176,12 +177,27 @@ namespace WindowWrapperTester
         {
             if (!Loaded) return;
 
+            g.Graphics.OutlineFillRectangle(BrushCollection.Get("Test").Brush, BrushCollection.Get("Test2").Brush, 0, 0, 1280, 720, 1, 0);
             //g.Graphics.DrawTextWithBackground(FontCollection.Get("Window.Title.Font").Font, BrushCollection.Get("Window.Font").Brush, BrushCollection.Get("Control.Fill.Pressed").Brush, 50, 50, 300, 300, "qweasdzxc\nqweqweqweasdasdasdasdasd", TextAlignment.Trailing);
         }
 
         private static void Overlay_OnKeyDown(object sender, KeyEventArgs e)
         {
             if (!Loaded) return;
+
+            if (e.KeyCode == Keys.Insert)
+            {
+                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
+                g.Overlay.SetScale(0.8f, 0.8f);
+                g.Overlay.Window.Resize((int)(g.Overlay.Window.Width * 0.8f), (int)(g.Overlay.Window.Height * 0.8f));
+            }
+
+            if (e.KeyCode == Keys.Home)
+            {
+                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea;
+            }
+            if (e.KeyCode == Keys.PageUp)
+                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
         }
 
         private static void Overlay_OnKeyUp(object sender, KeyEventArgs e)
