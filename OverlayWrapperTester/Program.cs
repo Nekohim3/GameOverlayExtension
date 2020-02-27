@@ -37,16 +37,22 @@ namespace OverlayWrapperTester
         [STAThread]
         static void Main()
         {
-            g.Overlay = new OverlayWrapper(100, 100, 1280, 720)
+            //g.Overlay = new OverlayWrapper(100, 100, 1280, 720)
+            //{
+            //    UseHook = true,
+            //    Window = { Title = "Test" },
+            //};
+            g.Overlay = new OverlayWrapper("sublime_text")
             {
-                UseHook = true,
-                Window  = {Title = "Test"},
+                UseHook = false,
+                Window = { Title = "Test" },
+                
             };
-            
+
             g.Overlay.OnGraphicsSetup   += Overlay_OnGraphicsSetup;
             g.Overlay.OnGraphicsDestroy += Overlay_OnGraphicsDestroy;
 
-            g.Overlay.OnPreDraw += Overlay_OnPreDraw;
+            g.Overlay.OnBeforeDraw += Overlay_OnBeforeDraw;
             g.Overlay.OnDraw    += Overlay_OnDraw;
 
             g.Overlay.OnKeyDown += Overlay_OnKeyDown;
@@ -165,7 +171,7 @@ namespace OverlayWrapperTester
             if (!Loaded) return;
         }
 
-        private static void Overlay_OnPreDraw(object sender, DrawGraphicsEventArgs e)
+        private static void Overlay_OnBeforeDraw(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
 
@@ -177,7 +183,8 @@ namespace OverlayWrapperTester
         {
             if (!Loaded) return;
 
-            g.Graphics.OutlineFillRectangle(BrushCollection.Get("Test").Brush, BrushCollection.Get("Test2").Brush, 0, 0, 1280, 720, 1, 0);
+            g.Graphics.OutlineFillRectangle(BrushCollection.Get("Test").Brush, BrushCollection.Get("Test2").Brush, 0, 0, g.Overlay.Window.Width, g.Overlay.Window.Height, 1, 0);
+            //g.Graphics.FillRectangle(BrushCollection.Get("Test").Brush, 50,50,50,50);
             //g.Graphics.DrawTextWithBackground(FontCollection.Get("Window.Title.Font").Font, BrushCollection.Get("Window.Font").Brush, BrushCollection.Get("Control.Fill.Pressed").Brush, 50, 50, 300, 300, "qweasdzxc\nqweqweqweasdasdasdasdasd", TextAlignment.Trailing);
         }
 

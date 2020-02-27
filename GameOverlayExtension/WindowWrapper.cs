@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -25,7 +26,7 @@ namespace GameOverlayExtension
         public override event GraphicsSetupHandler   OnGraphicsSetup;
         public override event GraphicsDestroyHandler OnGraphicsDestroy;
         public override event DrawHandler            OnDraw;
-        public override event DrawHandler            OnPreDraw;
+        public override event DrawHandler            OnBeforeDraw;
 
         #endregion
 
@@ -60,16 +61,18 @@ namespace GameOverlayExtension
                 WindowHandle              = IntPtr.Zero
             };
 
-            Window = new GraphicsWindow(graphics)
+            
+
+            Window = new GraphicsWindow( graphics)
             {
-                IsTopmost = false,
-                IsVisible = true,
-                FPS       = g.Config.GetInt("System", "fps"),
-                X         = x,
-                Y         = y,
-                Width     = width,
-                Height    = height,
-                ExtendedWStyle     = ExtendedWindowStyle.Layered
+                IsTopmost      = false,
+                IsVisible      = true,
+                FPS            = g.Config.GetInt("System", "fps"),
+                X              = x,
+                Y              = y,
+                Width          = width,
+                Height         = height,
+                ExtendedWStyle = ExtendedWindowStyle.Layered
             };
 
             Window.SetupGraphics   += _window_SetupGraphics;
@@ -204,7 +207,7 @@ namespace GameOverlayExtension
         internal override void GHook_MouseWheel(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-            
+
             OnMouseWheel?.Invoke(sender, e);
         }
 
@@ -281,7 +284,7 @@ namespace GameOverlayExtension
             if (!Loaded) return;
             if (!_windowLoaded) return;
 
-            OnPreDraw?.Invoke(sender, e);
+            OnBeforeDraw?.Invoke(sender, e);
 
             e.Graphics.ClearScene();
 

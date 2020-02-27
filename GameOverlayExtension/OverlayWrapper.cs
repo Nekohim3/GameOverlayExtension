@@ -31,7 +31,7 @@ namespace GameOverlayExtension
         public override event GraphicsSetupHandler   OnGraphicsSetup;
         public override event GraphicsDestroyHandler OnGraphicsDestroy;
         public override event DrawHandler            OnDraw;
-        public override event DrawHandler            OnPreDraw;
+        public override event DrawHandler            OnBeforeDraw;
 
         #endregion
 
@@ -50,8 +50,10 @@ namespace GameOverlayExtension
 
         private bool _graphicLoaded;
         private bool _windowLoaded;
-        private int _currentProcessId;
         private string _targetProcessName;
+        private int _targetProcessId;
+        private int _currentProcessId;
+        private int _foregroundProcessId;
         private bool _workWithoutProcess;
 
         private DrawingAreaScaleMode _scaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea;
@@ -90,10 +92,10 @@ namespace GameOverlayExtension
             Init(SystemInformation.VirtualScreen.X, SystemInformation.VirtualScreen.Y, SystemInformation.VirtualScreen.Width, SystemInformation.VirtualScreen.Height, p, workWithoutProcess);
         }
 
-        public OverlayWrapper(int x, int y, int width, int height, string p, bool workWithoutProcess = false) : base(x, y, width, height)
-        {
-            Init(x, y, width, height, p, workWithoutProcess);
-        }
+        //public OverlayWrapper(int x, int y, int width, int height, string p, bool workWithoutProcess = false) : base(x, y, width, height)
+        //{
+        //    Init(x, y, width, height, p, workWithoutProcess);
+        //}
 
         public void Init(int x, int y, int width, int height, string p, bool workWithoutProcess = false, DrawingAreaScaleMode scaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea)
         {
@@ -127,6 +129,7 @@ namespace GameOverlayExtension
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
+            Window.BeforeDrawGraphics += WindowOnBeforeDrawGraphics;
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
@@ -148,7 +151,7 @@ namespace GameOverlayExtension
                 Thread.Sleep(1);
             }
 
-            Window.Activate();
+            //Window.Activate();
             _windowLoaded = true;
         }
 
@@ -338,26 +341,41 @@ namespace GameOverlayExtension
             _graphicLoaded = true;
         }
 
+        internal void WindowOnBeforeDrawGraphics(object sender, DrawGraphicsEventArgs e)
+        {
+            if (!Loaded) return;
+            if (!_windowLoaded) return;
+
+            if (_targetProcessName != "")
+            {
+                _foregroundProcessId = User32.GetForegroundWindow().ToInt32();
+                var processes = Process.GetProcessesByName(_targetProcessName);
+
+                if (processes.Length != 0)
+                {
+                    _targetProcessId = processes.First().Id;
+                    var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
+                    g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+
+                    g.Window.FitToWindow(targetProcessMainWindowHandle);
+                }
+                else
+                    _targetProcessId = -1;
+            }
+
+            OnBeforeDraw?.Invoke(sender, e);
+
+        }
+
         internal override void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
             if (!_windowLoaded) return;
 
 
-
-            OnPreDraw?.Invoke(sender, e);
-
             e.Graphics.ClearScene();
 
             Controls.Draw();
-
-            g.Graphics.DrawText(Mx.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 10, 10);
-            g.Graphics.DrawText(My.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 50, 10);
-            g.Graphics.DrawText(Mx1.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 10, 50);
-            g.Graphics.DrawText(My1.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 50, 50);
-
-            g.Graphics.DrawText(Scale.X.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 10, 70);
-            g.Graphics.DrawText(Scale.Y.ToString(), FontCollection.Get("Control.Font").Font, BrushCollection.Get("Control.Font").Brush, 50, 70);
 
             OnDraw?.Invoke(sender, e);
         }

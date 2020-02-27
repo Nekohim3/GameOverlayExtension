@@ -40,12 +40,13 @@ namespace WindowWrapperTester
             {
                 UseHook = true,
                 Window  = {Title = "Test"},
+                
             };
             
             g.Overlay.OnGraphicsSetup   += Overlay_OnGraphicsSetup;
             g.Overlay.OnGraphicsDestroy += Overlay_OnGraphicsDestroy;
 
-            g.Overlay.OnPreDraw += Overlay_OnPreDraw;
+            g.Overlay.OnBeforeDraw += Overlay_OnPreDraw;
             g.Overlay.OnDraw    += Overlay_OnDraw;
 
             g.Overlay.OnKeyDown += Overlay_OnKeyDown;
@@ -59,9 +60,9 @@ namespace WindowWrapperTester
             g.Overlay.Run();
 
             Loaded = true;
-            var tt = new Timer {Interval = 3000};
-            tt.Tick += (sender, args) => throw new Exception();
-            tt.Start();
+            //var tt = new Timer {Interval = 3000};
+            //tt.Tick += (sender, args) => throw new Exception();
+            //tt.Start();
             Application.Run();
         }
 

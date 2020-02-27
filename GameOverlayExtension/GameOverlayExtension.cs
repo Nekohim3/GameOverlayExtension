@@ -32,7 +32,7 @@ namespace GameOverlayExtension
         public virtual event GraphicsSetupHandler   OnGraphicsSetup;
         public virtual event GraphicsDestroyHandler OnGraphicsDestroy;
         public virtual event DrawHandler            OnDraw;
-        public virtual event DrawHandler            OnPreDraw;
+        public virtual event DrawHandler            OnBeforeDraw;
 
         #endregion
 
