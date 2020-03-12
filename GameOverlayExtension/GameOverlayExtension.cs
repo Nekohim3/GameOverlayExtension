@@ -72,7 +72,7 @@ namespace GameOverlayExtension
             g.Window   = Window;
             Window.StartThread();
 
-            while (!Window.Graphics.IsInitialized)
+            while (!g.Graphics.IsInitialized)
                 Thread.Sleep(10);
 
             if (UseHook)
@@ -157,6 +157,8 @@ namespace GameOverlayExtension
         internal abstract void GHook_MouseWheel(object sender, MouseEventArgs e);
 
         internal abstract void _window_SetupGraphics(object sender, SetupGraphicsEventArgs e);
+
+        internal abstract void _window_BeforeDrawGraphics(object sender, DrawGraphicsEventArgs e);
 
         internal abstract void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e);
 

@@ -279,6 +279,11 @@ namespace GameOverlayExtension
             _graphicLoaded = true;
         }
 
+        internal override void _window_BeforeDrawGraphics(object sender, DrawGraphicsEventArgs e)
+        {
+            
+        }
+
         internal override void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;

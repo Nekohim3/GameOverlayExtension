@@ -165,18 +165,18 @@ namespace GameOverlayExtension.UI
             }
             if (HorizontalAlignment == HorizontalAlignment.Center)
             {
-                Rect.X = (g.Window.Width / 2) - (Width / 2);
+                Rect.X = (g.Graphics.Width / 2) - (Width / 2);
                 Rect.Width = Width;
             }
             if (HorizontalAlignment == HorizontalAlignment.Right)
             {
-                Rect.X = g.Window.Width - Width - Margin.Right;
+                Rect.X = g.Graphics.Width - Width - Margin.Right;
                 Rect.Width = Width;
             }
             if (HorizontalAlignment == HorizontalAlignment.Stretch)
             {
                 Rect.X = Margin.Left;
-                Rect.Width = g.Window.Width - Margin.Left - Margin.Right;
+                Rect.Width = g.Graphics.Width - Margin.Left - Margin.Right;
             }
 
 
@@ -187,18 +187,18 @@ namespace GameOverlayExtension.UI
             }
             if (VerticalAlignment == VerticalAlignment.Center)
             {
-                Rect.Y = (g.Window.Height / 2) - (Height / 2);
+                Rect.Y = (g.Graphics.Height / 2) - (Height / 2);
                 Rect.Height = Height;
             }
             if (VerticalAlignment == VerticalAlignment.Bottom)
             {
-                Rect.Y = g.Window.Height - Height - Margin.Bottom;
+                Rect.Y = g.Graphics.Height - Height - Margin.Bottom;
                 Rect.Height = Height;
             }
             if (VerticalAlignment == VerticalAlignment.Stretch)
             {
                 Rect.Y = Margin.Top;
-                Rect.Height = g.Window.Height - Margin.Top - Margin.Bottom;
+                Rect.Height = g.Graphics.Height - Margin.Top - Margin.Bottom;
             }
         }
     }

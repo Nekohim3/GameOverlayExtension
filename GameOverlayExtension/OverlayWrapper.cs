@@ -48,60 +48,19 @@ namespace GameOverlayExtension
 
         #endregion
 
-        private bool _graphicLoaded;
-        private bool _windowLoaded;
+        private bool   _graphicLoaded;
+        private bool   _windowLoaded;
         private string _targetProcessName;
-        private int _targetProcessId;
-        private int _currentProcessId;
-        private int _foregroundProcessId;
-        private bool _workWithoutProcess;
-
-        private DrawingAreaScaleMode _scaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea;
-        private Vector2 _scale = new Vector2(1, 1);
-
-        public DrawingAreaScaleMode ScaleMode
-        {
-            get => _scaleMode;
-            set
-            {
-                _scaleMode = value;
-                g.Graphics.GetRenderTarget().Transform = _scaleMode == DrawingAreaScaleMode.ScaleOnlyDrawingArea ? Matrix3x2.Identity : Matrix3x2.Scaling(_scale.X, _scale.Y);
-            }
-        }
-
-        public Vector2 Scale => _scale;
-
-        public void SetScale(float x, float y)
-        {
-            _scale = new Vector2(x, y);
-            g.Graphics.GetRenderTarget().Transform = _scaleMode == DrawingAreaScaleMode.ScaleAll ? Matrix3x2.Scaling(_scale.X, _scale.Y) : Matrix3x2.Identity;
-        }
+        private int    _targetProcessId;
+        private int    _currentProcessId;
+        private int    _foregroundProcessId;
+        private bool   _workWithoutProcess;
 
         public OverlayWrapper() : base()
         {
-            Init(SystemInformation.VirtualScreen.X, SystemInformation.VirtualScreen.Y, SystemInformation.VirtualScreen.Width, SystemInformation.VirtualScreen.Height, "");
-        }
-
-        public OverlayWrapper(int x, int y, int width, int height) : base(x, y, width, height)
-        {
-            Init(x, y, width, height, "");
-        }
-
-        public OverlayWrapper(string p, bool workWithoutProcess = false) : base()
-        {
-            Init(SystemInformation.VirtualScreen.X, SystemInformation.VirtualScreen.Y, SystemInformation.VirtualScreen.Width, SystemInformation.VirtualScreen.Height, p, workWithoutProcess);
-        }
-
-        //public OverlayWrapper(int x, int y, int width, int height, string p, bool workWithoutProcess = false) : base(x, y, width, height)
-        //{
-        //    Init(x, y, width, height, p, workWithoutProcess);
-        //}
-
-        public void Init(int x, int y, int width, int height, string p, bool workWithoutProcess = false, DrawingAreaScaleMode scaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea)
-        {
             _currentProcessId = Process.GetCurrentProcess().Id;
-            _targetProcessName = p;
-            _workWithoutProcess = workWithoutProcess;
+            _targetProcessName = "";
+            _workWithoutProcess = true;
             LoadConfig();
 
             var graphics = new Graphics
@@ -119,18 +78,141 @@ namespace GameOverlayExtension
                 IsTopmost = true,
                 IsVisible = true,
                 FPS = g.Config.GetInt("System", "fps"),
-                X = x,
-                Y = y,
-                Width = width,
-                Height = height,
+                X = SystemInformation.VirtualScreen.X,
+                Y = SystemInformation.VirtualScreen.Y,
+                Width = SystemInformation.VirtualScreen.Width,
+                Height = SystemInformation.VirtualScreen.Height,
                 ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow
             };
 
+            Window.SetupGraphics += _window_SetupGraphics;
+            Window.DestroyGraphics += _window_DestroyGraphics;
+            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
+            Window.DrawGraphics += _window_DrawGraphics;
+        }
+
+        public OverlayWrapper(string p) : base()
+        {
+            _currentProcessId = Process.GetCurrentProcess().Id;
+            _targetProcessName = p;
+            _workWithoutProcess = false;
+            LoadConfig();
+
+            var graphics = new Graphics
+            {
+                MeasureFPS = true,
+                PerPrimitiveAntiAliasing = false,
+                TextAntiAliasing = true,
+                UseMultiThreadedFactories = false,
+                VSync = false,
+                WindowHandle = IntPtr.Zero
+            };
+
+            Window = new GraphicsWindow(graphics)
+            {
+                IsTopmost = true,
+                IsVisible = true,
+                FPS = g.Config.GetInt("System", "fps"),
+                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
+                StaticSize = false,
+            };
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
-            Window.BeforeDrawGraphics += WindowOnBeforeDrawGraphics;
+            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
             Window.DrawGraphics += _window_DrawGraphics;
+        }
+
+        public OverlayWrapper(string p, int surfaceWidth, int surfaceHeight, GameOverlay.Drawing.Rectangle offsets, GameOverlay.Drawing.Rectangle maximizeWindowOffsets, bool keepAspectRatio = true) : base()
+        {
+            _currentProcessId = Process.GetCurrentProcess().Id;
+            _targetProcessName = p;
+            _workWithoutProcess = false;
+            LoadConfig();
+
+            var graphics = new Graphics
+            {
+                MeasureFPS = true,
+                PerPrimitiveAntiAliasing = false,
+                TextAntiAliasing = true,
+                UseMultiThreadedFactories = false,
+                VSync = false,
+                WindowHandle = IntPtr.Zero
+            };
+
+            Window = new GraphicsWindow(graphics)
+            {
+                IsTopmost = true,
+                IsVisible = true,
+                FPS = g.Config.GetInt("System", "fps"),
+                Width = surfaceWidth,
+                Height = surfaceHeight,
+                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
+                StaticSize = true,
+                Offsets = offsets,
+                MaximizedWindowOffsets = maximizeWindowOffsets,
+                KeepAspectRatio = keepAspectRatio
+            };
+
+            Window.SetupGraphics += _window_SetupGraphics;
+            Window.DestroyGraphics += _window_DestroyGraphics;
+            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
+            Window.DrawGraphics += _window_DrawGraphics;
+        }
+
+        public OverlayWrapper(string p, GameOverlay.Drawing.Rectangle offsets, GameOverlay.Drawing.Rectangle maximizeWindowOffsets, bool keepAspectRatio = true) : base()
+        {
+            _currentProcessId = Process.GetCurrentProcess().Id;
+            _targetProcessName = p;
+            _workWithoutProcess = false;
+            LoadConfig();
+
+            var graphics = new Graphics
+            {
+                MeasureFPS = true,
+                PerPrimitiveAntiAliasing = false,
+                TextAntiAliasing = true,
+                UseMultiThreadedFactories = false,
+                VSync = false,
+                WindowHandle = IntPtr.Zero
+            };
+
+            Window = new GraphicsWindow(graphics)
+            {
+                IsTopmost = true,
+                IsVisible = true,
+                FPS = g.Config.GetInt("System", "fps"),
+                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
+                StaticSize = false,
+                Offsets = offsets,
+                MaximizedWindowOffsets = maximizeWindowOffsets,
+                KeepAspectRatio = keepAspectRatio
+            };
+
+            Window.SetupGraphics += _window_SetupGraphics;
+            Window.DestroyGraphics += _window_DestroyGraphics;
+            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
+            Window.DrawGraphics += _window_DrawGraphics;
+        }
+
+        public void SurfaceResize(int width, int height)
+        {
+            g.Graphics.Resize(width, height);
+        }
+
+        public void WindowResize(int width, int height)
+        {
+            g.Window.Resize(width, height);
+        }
+
+        public void WindowResize(int x, int y, int width, int height)
+        {
+            g.Window.Resize(x, y, width, height);
+        }
+
+        public void WindowMove(int x, int y)
+        {
+            g.Window.Move(x, y);
         }
 
         public static void LoadConfig()
@@ -151,7 +233,7 @@ namespace GameOverlayExtension
                 Thread.Sleep(1);
             }
 
-            //Window.Activate();
+            Window.Deactivate();
             _windowLoaded = true;
         }
 
@@ -178,10 +260,6 @@ namespace GameOverlayExtension
             OnKeyUp?.Invoke(sender, e);
         }
 
-        private int Mx = 0;
-        private int My = 0;
-        private int Mx1 = 0;
-        private int My1 = 0;
         internal override void GHook_MouseDown(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
@@ -189,11 +267,11 @@ namespace GameOverlayExtension
             var mx = e.X - g.Overlay.Window.X;
             var my = e.Y - g.Overlay.Window.Y;
 
-            if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
-            {
-                mx = (int)(mx / Scale.X);
-                my = (int)(my / Scale.Y);
-            }
+            //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
+            //{
+            //    mx = (int)(mx / Scale.X);
+            //    my = (int)(my / Scale.Y);
+            //}
 
             foreach (var q in Controls.ControlList.Where(x => x is DxTextBox))
                 ((DxTextBox) q).IsFocused = false;
@@ -211,11 +289,11 @@ namespace GameOverlayExtension
             var mx = e.X - g.Overlay.Window.X;
             var my = e.Y - g.Overlay.Window.Y;
 
-            if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
-            {
-                mx = (int)(mx / Scale.X);
-                my = (int)(my / Scale.Y);
-            }
+            //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
+            //{
+            //    mx = (int)(mx / Scale.X);
+            //    my = (int)(my / Scale.Y);
+            //}
 
             var c = Controls.ControlList.LastOrDefault(x => x.IsMouseDown && !x.IsTransparent);
             c?.OnMouseUp(c, e, new Point(mx, my));
@@ -230,17 +308,11 @@ namespace GameOverlayExtension
             var mx = e.X - g.Overlay.Window.X;
             var my = e.Y - g.Overlay.Window.Y;
 
-            Mx = mx;
-            My = my;
-
-            if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
-            {
-                mx = (int)(mx / Scale.X);
-                my = (int)(my / Scale.Y);
-            }
-
-            Mx1 = mx;
-            My1 = my;
+            //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
+            //{
+            //    mx = (int)(mx / Scale.X);
+            //    my = (int)(my / Scale.Y);
+            //}
 
             foreach (var q in Controls.ControlList.Where(x => !x.IsTransparent))
             {
@@ -268,22 +340,20 @@ namespace GameOverlayExtension
         internal override void GHook_MouseWheel(object sender, MouseEventArgs e)
         {
             if (!Loaded) return;
-            
+
             OnMouseWheel?.Invoke(sender, e);
         }
 
         internal override void _window_SetupGraphics(object sender, SetupGraphicsEventArgs e)
         {
             while (!Loaded)
-            {
                 Thread.Sleep(1);
-            }
 
             BrushCollection.Init();
 
             FontCollection.Init();
 
-            BrushCollection.Add("Test", 0xffcc1111);
+            BrushCollection.Add("Test",  0xffcc1111);
             BrushCollection.Add("Test2", 0x33cc1111);
 
             //TODO: sort names
@@ -341,7 +411,7 @@ namespace GameOverlayExtension
             _graphicLoaded = true;
         }
 
-        internal void WindowOnBeforeDrawGraphics(object sender, DrawGraphicsEventArgs e)
+        internal override void _window_BeforeDrawGraphics(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
             if (!_windowLoaded) return;
@@ -357,21 +427,19 @@ namespace GameOverlayExtension
                     var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
                     g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
 
-                    g.Window.FitToWindow(targetProcessMainWindowHandle);
+                    g.Window.FitToWindow(targetProcessMainWindowHandle, g.Graphics.Width, g.Graphics.Height);
                 }
                 else
                     _targetProcessId = -1;
             }
 
             OnBeforeDraw?.Invoke(sender, e);
-
         }
 
         internal override void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
             if (!_windowLoaded) return;
-
 
             e.Graphics.ClearScene();
 

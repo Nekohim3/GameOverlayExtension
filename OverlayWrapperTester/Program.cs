@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using GameOverlay.Drawing;
+using GameOverlay.PInvoke;
 using GameOverlay.Windows;
 
 using GameOverlayExtension;
@@ -42,11 +43,20 @@ namespace OverlayWrapperTester
             //    UseHook = true,
             //    Window = { Title = "Test" },
             //};
-            g.Overlay = new OverlayWrapper("sublime_text")
+            //g.Overlay = new OverlayWrapper(100, 100, 1000, 500)
+            //{
+            //    UseHook = true,
+            //    Window = { Title = "Test" },
+
+            //};
+            g.Overlay = new OverlayWrapper("nox",// 1920, 1080, 
+                                           new GameOverlay.Drawing.Rectangle(2, 32, 2, 0), 
+                                           new GameOverlay.Drawing.Rectangle(2, 32, 61, 3),
+                                           false)
             {
-                UseHook = false,
+                UseHook = true,
                 Window = { Title = "Test" },
-                
+
             };
 
             g.Overlay.OnGraphicsSetup   += Overlay_OnGraphicsSetup;
@@ -183,7 +193,8 @@ namespace OverlayWrapperTester
         {
             if (!Loaded) return;
 
-            g.Graphics.OutlineFillRectangle(BrushCollection.Get("Test").Brush, BrushCollection.Get("Test2").Brush, 0, 0, g.Overlay.Window.Width, g.Overlay.Window.Height, 1, 0);
+            g.Graphics.OutlineFillRectangle(BrushCollection.Get("Test").Brush, BrushCollection.Get("Test2").Brush, 0, 0, g.Graphics.Width, g.Graphics.Height, 1, 0);
+            //g.Graphics.DrawText($"{User32.GetWindowLong(Process.GetProcessesByName("nox").First().MainWindowHandle, -16)}", FontCollection.Get("Window.Title.Font").Font, BrushCollection.Get("Test").Brush, BrushCollection.Get("Window.Fill").Brush, 50,50);
             //g.Graphics.FillRectangle(BrushCollection.Get("Test").Brush, 50,50,50,50);
             //g.Graphics.DrawTextWithBackground(FontCollection.Get("Window.Title.Font").Font, BrushCollection.Get("Window.Font").Brush, BrushCollection.Get("Control.Fill.Pressed").Brush, 50, 50, 300, 300, "qweasdzxc\nqweqweqweasdasdasdasdasd", TextAlignment.Trailing);
         }
@@ -194,17 +205,18 @@ namespace OverlayWrapperTester
 
             if (e.KeyCode == Keys.Insert)
             {
-                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
-                g.Overlay.SetScale(0.8f, 0.8f);
-                g.Overlay.Window.Resize((int)(g.Overlay.Window.Width * 0.8f), (int)(g.Overlay.Window.Height * 0.8f));
+                g.Graphics.Resize(500,500);
+                //g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
+                //g.Overlay.SetScale(0.8f, 0.8f);
+                //g.Overlay.Window.Resize((int)(g.Overlay.Window.Width * 0.8f), (int)(g.Overlay.Window.Height * 0.8f));
             }
 
-            if (e.KeyCode == Keys.Home)
-            {
-                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea;
-            }
-            if (e.KeyCode == Keys.PageUp)
-                g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
+            //if (e.KeyCode == Keys.Home)
+            //{
+            //    g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleOnlyDrawingArea;
+            //}
+            //if (e.KeyCode == Keys.PageUp)
+            //    g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
         }
 
         private static void Overlay_OnKeyUp(object sender, KeyEventArgs e)
