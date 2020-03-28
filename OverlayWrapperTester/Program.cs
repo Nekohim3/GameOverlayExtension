@@ -49,21 +49,20 @@ namespace OverlayWrapperTester
             //    Window = { Title = "Test" },
 
             //};
-            g.Overlay = new OverlayWrapper("nox",// 1920, 1080, 
-                                           new GameOverlay.Drawing.Rectangle(2, 32, 2, 0), 
-                                           new GameOverlay.Drawing.Rectangle(2, 32, 61, 3),
-                                           false)
+            g.Overlay = new OverlayWrapper("sublime_text")
             {
-                UseHook = true,
-                Window = { Title = "Test" },
-
+                UseHook = false,
+                Window  = {Title = "Test"},
             };
+
+            //g.Overlay.Window.Offsets = new GameOverlay.Drawing.Rectangle(2, 32, 2, 0);
+            //g.Overlay.Window.MaximizedWindowOffsets = new GameOverlay.Drawing.Rectangle(2, 32, 61, 3);
 
             g.Overlay.OnGraphicsSetup   += Overlay_OnGraphicsSetup;
             g.Overlay.OnGraphicsDestroy += Overlay_OnGraphicsDestroy;
 
             g.Overlay.OnBeforeDraw += Overlay_OnBeforeDraw;
-            g.Overlay.OnDraw    += Overlay_OnDraw;
+            g.Overlay.OnDraw       += Overlay_OnDraw;
 
             g.Overlay.OnKeyDown += Overlay_OnKeyDown;
             g.Overlay.OnKeyUp   += Overlay_OnKeyUp;
@@ -83,7 +82,6 @@ namespace OverlayWrapperTester
         }
 
         #region overlay events
-
 
         private static void Overlay_OnGraphicsSetup(object sender, SetupGraphicsEventArgs e)
         {
@@ -166,14 +164,32 @@ namespace OverlayWrapperTester
 
             var trackbar = new DxTrackBar("trackbar", "trackbar test")
             {
-                Width = 200,
-                Max = 250,
-                Min = 0,
+                Width        = 200,
+                Max          = 250,
+                Min          = 0,
                 IsSnapToTick = true,
-                TickRate = 1,
-                Margin = new Thickness(100, 250, 0, 0)
+                TickRate     = 1,
+                Margin       = new Thickness(100, 250, 0, 0)
             };
+
+            var label = new DxLabel("", "Vulkan")
+            {
+                Width     = 200,
+                Height    = 50,
+                FillBrush = BrushCollection.Get("Window.Fill").Brush,
+                Font      = FontCollection.Get("TestFont").Font,
+                FontBrush = BrushCollection.Get("Test").Brush,
+                Margin    = new Thickness(400, 400, 0, 0),
+                Text = new TextHelper("Vlukan")
+                {
+                    TextAlignment      = TextAlignment.Center,
+                    ParagraphAlignment = ParagraphAlignment.Center,
+                }
+            };
+
             Controls.Add(trackbar);
+
+            Controls.Add(label);
         }
 
         private static void Overlay_OnGraphicsDestroy(object sender, DestroyGraphicsEventArgs e)
@@ -205,10 +221,7 @@ namespace OverlayWrapperTester
 
             if (e.KeyCode == Keys.Insert)
             {
-                g.Graphics.Resize(500,500);
-                //g.Overlay.ScaleMode = DrawingAreaScaleMode.ScaleAll;
-                //g.Overlay.SetScale(0.8f, 0.8f);
-                //g.Overlay.Window.Resize((int)(g.Overlay.Window.Width * 0.8f), (int)(g.Overlay.Window.Height * 0.8f));
+                g.Overlay.Window.Show();
             }
 
             //if (e.KeyCode == Keys.Home)

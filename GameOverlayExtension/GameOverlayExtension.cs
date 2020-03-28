@@ -99,7 +99,7 @@ namespace GameOverlayExtension
 
         public virtual void StopHook()
         {
-            GHook.Dispose();
+            GHook?.Dispose();
         }
 
         public virtual void UnhandledException(object sender, UnhandledExceptionEventArgs args)

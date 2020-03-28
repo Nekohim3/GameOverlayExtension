@@ -46,21 +46,42 @@ namespace GameOverlayExtension
 
         #endregion
 
+        #region base
+
+        public delegate void AppExitHandler();
+
+        public event AppExitHandler AppExit;
+
+        public virtual void OnAppExit()
+        {
+            AppExit?.Invoke();
+        }
+
+        #endregion
+
         #endregion
 
         private bool   _graphicLoaded;
         private bool   _windowLoaded;
-        private string _targetProcessName;
+
+        private string _attachTargetName;
+
         private int    _targetProcessId;
         private int    _currentProcessId;
         private int    _foregroundProcessId;
-        private bool   _workWithoutProcess;
+
+        private string _foregroundWindowTitle;
+
+        public bool WorkWithoutProcess { get; set; }
+
+        private double _aspectRatio;
+        private AttachTarget _attachTargetMode;
 
         public OverlayWrapper() : base()
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
-            _targetProcessName = "";
-            _workWithoutProcess = true;
+            _attachTargetName = "";
+
             LoadConfig();
 
             var graphics = new Graphics
@@ -91,11 +112,11 @@ namespace GameOverlayExtension
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
-        public OverlayWrapper(string p) : base()
+        public OverlayWrapper(string p, AttachTarget target = AttachTarget.Process) : base()
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
-            _targetProcessName = p;
-            _workWithoutProcess = false;
+            _attachTargetName = p;
+
             LoadConfig();
 
             var graphics = new Graphics
@@ -113,9 +134,10 @@ namespace GameOverlayExtension
                 IsTopmost = true,
                 IsVisible = true,
                 FPS = g.Config.GetInt("System", "fps"),
-                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
-                StaticSize = false,
+                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow
             };
+
+            _attachTargetMode = target;
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
@@ -123,11 +145,11 @@ namespace GameOverlayExtension
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
-        public OverlayWrapper(string p, int surfaceWidth, int surfaceHeight, GameOverlay.Drawing.Rectangle offsets, GameOverlay.Drawing.Rectangle maximizeWindowOffsets, bool keepAspectRatio = true) : base()
+        public OverlayWrapper(string p, int surfaceWidth, int surfaceHeight, AttachTarget target = AttachTarget.Process) : base()
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
-            _targetProcessName = p;
-            _workWithoutProcess = false;
+            _attachTargetName = p;
+
             LoadConfig();
 
             var graphics = new Graphics
@@ -149,10 +171,11 @@ namespace GameOverlayExtension
                 Height = surfaceHeight,
                 ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
                 StaticSize = true,
-                Offsets = offsets,
-                MaximizedWindowOffsets = maximizeWindowOffsets,
-                KeepAspectRatio = keepAspectRatio
+                KeepAspectRatio = true
             };
+
+            _attachTargetMode = target;
+            _aspectRatio = (double) surfaceWidth / (double) surfaceHeight;
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
@@ -160,11 +183,11 @@ namespace GameOverlayExtension
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
-        public OverlayWrapper(string p, GameOverlay.Drawing.Rectangle offsets, GameOverlay.Drawing.Rectangle maximizeWindowOffsets, bool keepAspectRatio = true) : base()
+        public OverlayWrapper(string p, double aspectRatio, AttachTarget target = AttachTarget.Process) : base()
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
-            _targetProcessName = p;
-            _workWithoutProcess = false;
+            _attachTargetName = p;
+
             LoadConfig();
 
             var graphics = new Graphics
@@ -183,36 +206,16 @@ namespace GameOverlayExtension
                 IsVisible = true,
                 FPS = g.Config.GetInt("System", "fps"),
                 ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
-                StaticSize = false,
-                Offsets = offsets,
-                MaximizedWindowOffsets = maximizeWindowOffsets,
-                KeepAspectRatio = keepAspectRatio
+                KeepAspectRatio = true
             };
+
+            _attachTargetMode = target;
+            _aspectRatio = aspectRatio;
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
             Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
             Window.DrawGraphics += _window_DrawGraphics;
-        }
-
-        public void SurfaceResize(int width, int height)
-        {
-            g.Graphics.Resize(width, height);
-        }
-
-        public void WindowResize(int width, int height)
-        {
-            g.Window.Resize(width, height);
-        }
-
-        public void WindowResize(int x, int y, int width, int height)
-        {
-            g.Window.Resize(x, y, width, height);
-        }
-
-        public void WindowMove(int x, int y)
-        {
-            g.Window.Move(x, y);
         }
 
         public static void LoadConfig()
@@ -355,6 +358,7 @@ namespace GameOverlayExtension
 
             BrushCollection.Add("Test",  0xffcc1111);
             BrushCollection.Add("Test2", 0x33cc1111);
+            FontCollection.Add("TestFont", "Verdana", 36);
 
             //TODO: sort names
 
@@ -416,22 +420,73 @@ namespace GameOverlayExtension
             if (!Loaded) return;
             if (!_windowLoaded) return;
 
-            if (_targetProcessName != "")
+            #region Attach
+
+            if (_attachTargetName != "")
             {
-                _foregroundProcessId = User32.GetForegroundWindow().ToInt32();
-                var processes = Process.GetProcessesByName(_targetProcessName);
-
-                if (processes.Length != 0)
+                if (_attachTargetMode == AttachTarget.Process)
                 {
-                    _targetProcessId = processes.First().Id;
-                    var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
-                    g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+                    _foregroundProcessId = User32.GetForegroundWindow().ToInt32();
+                    var processes = Process.GetProcessesByName(_attachTargetName);
 
-                    g.Window.FitToWindow(targetProcessMainWindowHandle, g.Graphics.Width, g.Graphics.Height);
+                    if (processes.Length != 0)
+                    {
+                        if (!g.Window.IsVisible)
+                            g.Window.Show();
+
+                        _targetProcessId = processes.First().Id;
+                        var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
+                        g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+
+                        if(_aspectRatio.CloseTo(0))
+                            g.Window.FitToWindow(targetProcessMainWindowHandle);
+                        else
+                            g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
+                    }
+                    else
+                    {
+                        _targetProcessId = -1;
+
+                        if (WorkWithoutProcess)
+                        {
+                            if (g.Window.IsVisible)
+                                g.Window.Hide();
+                        }
+                        else
+                        {
+                            OnAppExit();
+                            g.Overlay.StopHook();
+                            g.Overlay.Window.Graphics.Dispose();
+                            Process.GetCurrentProcess().Kill();
+                        }
+                    }
                 }
-                else
-                    _targetProcessId = -1;
+                else if(_attachTargetMode == AttachTarget.ActiveWindowTitle)
+                {
+                    _foregroundWindowTitle = User32.GetActiveWindowTitle();
+
+                    if (_foregroundWindowTitle != null)
+                    {
+                        if (_foregroundWindowTitle.Contains(_attachTargetName))
+                        {
+                            if (!g.Window.IsVisible)
+                                g.Window.Show();
+
+                            var targetProcessMainWindowHandle = User32.GetForegroundWindow();
+                            g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+
+                            g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
+                        }
+                        else
+                        {
+                            if (g.Window.IsVisible)
+                                g.Window.Hide();
+                        }
+                    }
+                }
             }
+
+            #endregion
 
             OnBeforeDraw?.Invoke(sender, e);
         }
@@ -462,9 +517,9 @@ namespace GameOverlayExtension
         }
     }
 
-    public enum DrawingAreaScaleMode
+    public enum AttachTarget
     {
-        ScaleAll,
-        ScaleOnlyDrawingArea
+        Process,
+        ActiveWindowTitle
     }
 }

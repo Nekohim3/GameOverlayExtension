@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="BrushCollection.cs" />
     <Compile Include="Controls.cs" />
+    <Compile Include="DoubleExtension.cs" />
     <Compile Include="FloatUtils.cs" />
     <Compile Include="FontCollection.cs" />
     <Compile Include="g.cs" />
