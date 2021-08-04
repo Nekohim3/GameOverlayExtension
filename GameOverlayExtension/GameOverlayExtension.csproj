@@ -34,9 +34,6 @@
     <Reference Include="Gma.System.MouseKeyHook, Version=5.6.130.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MouseKeyHook.5.6.0\lib\net40\Gma.System.MouseKeyHook.dll</HintPath>
     </Reference>
-    <Reference Include="Nini">
-      <HintPath>..\..\Nini\Nini\Bin\DotNet\1.0\Release\Nini.dll</HintPath>
-    </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
     </Reference>
@@ -61,25 +58,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BrushCollection.cs" />
-    <Compile Include="Controls.cs" />
     <Compile Include="DoubleExtension.cs" />
     <Compile Include="FloatUtils.cs" />
-    <Compile Include="FontCollection.cs" />
     <Compile Include="g.cs" />
     <Compile Include="GameOverlayExtension.cs" />
     <Compile Include="KeyboardHelper.cs" />
     <Compile Include="OverlayWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\DxButton.cs" />
+    <Compile Include="UI\DxComboBox.cs" />
     <Compile Include="UI\DxControl.cs" />
-    <Compile Include="UI\DxImage.cs" />
-    <Compile Include="UI\DxImageButton.cs" />
-    <Compile Include="UI\DxLabel.cs" />
-    <Compile Include="UI\DxPanel.cs" />
-    <Compile Include="UI\DxTextBox.cs" />
-    <Compile Include="UI\DxToggle.cs" />
-    <Compile Include="UI\DxTrackBar.cs" />
+    <Compile Include="UI\DxGrid.cs" />
+    <Compile Include="UI\DxGroupBox.cs" />
+    <Compile Include="UI\DxWindow.cs" />
     <Compile Include="WindowWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -91,5 +82,6 @@
       <Name>GameOverlay</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

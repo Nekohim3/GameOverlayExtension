@@ -1,11 +1,13 @@
-﻿using System.Windows.Forms;
+﻿using System.Collections.Generic;
+using System.Windows.Forms;
 using GameOverlay.Drawing;
+using Point = SharpDX.Point;
 
 namespace GameOverlayExtension.UI
 {
+
     public abstract class DxControl
     {
-
         #region Events
 
         public delegate void MouseEventHandler(DxControl ctl, MouseEventArgs args, Point pt);
@@ -16,63 +18,149 @@ namespace GameOverlayExtension.UI
         public event MouseEventHandler MouseEnter;
         public event MouseEventHandler MouseLeave;
         public event MouseEventHandler MouseMove;
+        public event MouseEventHandler MouseWheel;
 
         public event KeyEventHandler KeyDown;
         public event KeyEventHandler KeyUp;
-        
 
-        public virtual void OnMouseMove(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseMove(DxControl ctl, MouseEventArgs args, Point pt)
         {
+            if (ClipToBonds && !IntersectTest(pt.X, pt.Y))
+            {
+                RecursiveMouseLeave(ctl, args, pt);
+
+                return false;
+            }
+
+            var f = false;
+            if (Childs != null)
+                for (var i = Childs.Count - 1; i >= 0; i--)
+                    if (!f)
+                    {
+                        if (Childs[i].OnMouseMove(Childs[i], args, pt))
+                        {
+                            f = true;
+                            OnMouseLeave(ctl, args, pt);
+                        }
+                    }
+                    else
+                        Childs[i].OnMouseLeave(ctl, args, pt);
+
+            if (f) return true;
+
+            if (!ClipToBonds && !IntersectTest(pt.X, pt.Y))
+            {
+                OnMouseLeave(ctl, args, pt);
+
+                return false;
+            }
+
             MouseMove?.Invoke(ctl, args, pt);
+            OnMouseEnter(ctl, args, pt);
+
+            return true;
         }
 
-        public virtual void OnMouseDown(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseDown(DxControl ctl, MouseEventArgs args, Point pt)
         {
+            if (Childs != null)
+                for (var i = Childs.Count - 1; i >= 0; i--)
+                    if (Childs[i].OnMouseDown(Childs[i], args, pt))
+                        return true;
+
+            if (!IntersectTest(pt.X, pt.Y)) return false;
+            if (!IsMouseOver) return false;
+
+            for (var i = g.Overlay.TopList.Count - 1; i >= 0; i--)
+                if (g.Overlay.TopList[i].IntersectTest(pt.X, pt.Y))
+                    return false;
+
             IsMouseDown = true;
             MouseDown?.Invoke(ctl, args, pt);
+
+            return true;
         }
 
-        public virtual void OnMouseUp(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseUp(DxControl ctl, MouseEventArgs args, Point pt)
         {
+            if (Childs != null)
+                for (var i = Childs.Count - 1; i >= 0; i--)
+                    if (Childs[i].OnMouseUp(Childs[i], args, pt))
+                        return true;
+
+            if (!IntersectTest(pt.X, pt.Y)) return false;
+            if (!IsMouseDown || !IsMouseOver) return false;
             IsMouseDown = false;
             MouseUp?.Invoke(ctl, args, pt);
+
+            return true;
         }
 
         public virtual void OnMouseEnter(DxControl ctl, MouseEventArgs args, Point pt)
         {
+            if (IsMouseOver) return;
+
             IsMouseOver = true;
             MouseEnter?.Invoke(ctl, args, pt);
         }
 
         public virtual void OnMouseLeave(DxControl ctl, MouseEventArgs args, Point pt)
         {
+            if (!IsMouseOver) return;
             IsMouseOver = false;
+            IsMouseDown = false;
             MouseLeave?.Invoke(ctl, args, pt);
         }
 
-        public virtual void OnKeyDown(DxControl ctl, KeyEventArgs args)
+        public virtual bool OnMouseWheel(DxControl ctl, MouseEventArgs args, Point pt)
         {
-            KeyDown?.Invoke(ctl, args);
+            if (Childs != null)
+                for (var i = Childs.Count - 1; i >= 0; i--)
+                    if (Childs[i].OnMouseWheel(Childs[i], args, pt))
+                        return true;
+
+            if (!IntersectTest(pt.X, pt.Y)) return false;
+            if (!IsMouseOver) return false;
+
+            MouseWheel?.Invoke(ctl, args, pt);
+
+            return true;
         }
 
-        public virtual void OnKeyUp(DxControl ctl, KeyEventArgs args)
+        public virtual bool OnKeyDown(DxControl ctl, KeyEventArgs args)
+        {
+            KeyDown?.Invoke(ctl, args);
+            return true;
+        }
+
+        public virtual bool OnKeyUp(DxControl ctl, KeyEventArgs args)
         {
             KeyUp?.Invoke(ctl, args);
+            return true;
         }
 
         #endregion
 
-        #region Private properties
+        #region Variables
 
         private Thickness _margin;
         private int _width;
         private int _height;
         private HorizontalAlignment _horizontalAlignment;
         private VerticalAlignment _verticalAlignment;
+        private float _opacity;
 
-        #endregion
+        protected List<IBrush> Brushes;
 
-        #region Public properties
+        public DxControl Parent { get; set; }
+        public List<DxControl> Childs { get; set; }
+        public bool ClipToBonds { get; set; }
+        public bool IsMouseOver { get; set; }
+        public bool IsMouseDown { get; set; }
+        public string Name { get; set; }
+        public ControlRectangle Rect { get; set; }
+        public int BorderThickness { get; set; }
+        public bool TopMost { get; set; }
 
         public Thickness Margin
         {
@@ -124,31 +212,149 @@ namespace GameOverlayExtension.UI
             }
         }
 
-        public bool IsTransparent { get; set; }
-        public bool IsMouseOver { get; set; }
-        public bool IsMouseDown { get; set; }
-        public string Name { get; set; }
+        public float Opacity
+        {
+            get => _opacity;
+            set
+            {
+                _opacity = value;
+
+                if (_opacity > 1f)
+                    _opacity = 1f;
+
+                if (_opacity < 0f)
+                    _opacity = 0f;
+
+                RecursiveSetOpacity(_opacity);
+            }
+        }
 
         #endregion
 
-
-
-        protected ControlRectangle Rect { get; set; }
+        #region Functions
 
         protected DxControl(string name)
         {
+            Name = name;
+            ClipToBonds = true;
             _width = 1;
             _height = 1;
-            _margin = new Thickness(1, 1, 1, 1);
-            Rect = new ControlRectangle(0, 0, 0, 0);
-            Name = name;
-            
+            _opacity = 1f;
+            _margin = new Thickness(0, 0, 0, 0);
+            Rect = new ControlRectangle(0, 0, 1, 1);
+            _horizontalAlignment = HorizontalAlignment.Left;
+            _verticalAlignment = VerticalAlignment.Top;
+            Childs = new List<DxControl>();
+            Brushes = new List<IBrush>();
+            RefreshRect();
+        }
 
+        private void RecursiveSetOpacity(float op)
+        {
+            if (Brushes != null)
+                for (var i = 0; i < Brushes.Count; i++)
+                    Brushes[i].Brush.Opacity = op;
+
+            if (Childs != null)
+                for (var index = 0; index < Childs.Count; index++)
+                    Childs[index].RecursiveSetOpacity(op);
+        }
+
+        protected void RefreshRect()
+        {
+            if (HorizontalAlignment == HorizontalAlignment.Left)
+            {
+                Rect.X = (Parent?.Rect.X ?? 0) + Margin.Left;
+                Rect.Width = Width;
+            }
+            if (HorizontalAlignment == HorizontalAlignment.Center)
+            {
+                Rect.X = (Parent?.Rect.X ?? 0) + (Parent?.Rect.Width ?? 0) / 2 - Width / 2 + Margin.Left / 2 - Margin.Right / 2;
+                Rect.Width = Width;
+            }
+            if (HorizontalAlignment == HorizontalAlignment.Right)
+            {
+                Rect.X = (Parent?.Rect.X ?? 0) + (Parent?.Rect.Width ?? 0) - Width - Margin.Right;
+                Rect.Width = Width;
+            }
+            if (HorizontalAlignment == HorizontalAlignment.Stretch)
+            {
+                Rect.X = (Parent?.Rect.X ?? 0) + Margin.Left;
+                Rect.Width = (Parent?.Rect.Width ?? 0) - Margin.Left - Margin.Right;
+            }
+
+
+            if (VerticalAlignment == VerticalAlignment.Top)
+            {
+                Rect.Y = (Parent?.Rect.Y ?? 0) + Margin.Top;
+                Rect.Height = Height;
+            }
+            if (VerticalAlignment == VerticalAlignment.Center)
+            {
+                Rect.Y = (Parent?.Rect.Y ?? 0) + (Parent?.Rect.Height ?? 0) / 2 - Height / 2 + Margin.Top / 2 - Margin.Bottom / 2;
+                Rect.Height = Height;
+            }
+            if (VerticalAlignment == VerticalAlignment.Bottom)
+            {
+                Rect.Y = (Parent?.Rect.Y ?? 0) + (Parent?.Rect.Height ?? 0) - Height - Margin.Bottom;
+                Rect.Height = Height;
+            }
+            if (VerticalAlignment == VerticalAlignment.Stretch)
+            {
+                Rect.Y = (Parent?.Rect.Y ?? 0) + Margin.Top;
+                Rect.Height = (Parent?.Rect.Height ?? 0) - Margin.Top - Margin.Bottom;
+            }
+
+            if (Childs != null)
+                for (var i = 0; i < Childs.Count; i++)
+                    Childs[i].RefreshRect();
+        }
+
+        protected void RecursiveMouseLeave(DxControl ctl, MouseEventArgs args, Point pt)
+        {
+            ctl.OnMouseLeave(ctl, args, pt);
+
+            if (ctl.Childs == null) return;
+
+            for (var i = ctl.Childs.Count - 1; i >= 0; i--)
+                ctl.Childs[i].RecursiveMouseLeave(ctl.Childs[i], args, pt);
+        }
+
+        public virtual void AddChild(DxControl ctl)
+        {
+            if (Childs == null) return;
+            Childs.Add(ctl);
+            ctl.Parent = this;
+            RefreshRect();
+        }
+
+        public virtual void RemoveChild(DxControl ctl)
+        {
+            Childs?.Remove(ctl);
+        }
+
+        public virtual void RemoveChildAt(int i)
+        {
+            Childs?.RemoveAt(i);
         }
 
         public virtual void Draw()
         {
-            //g.Graphics.OutlineFillRectangle(StrokeBrush, FillBrush, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
+            var clipped = false;
+            if (ClipToBonds)
+            {
+                g.Graphics.ClipRegionStart(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height);
+                clipped = true;
+            }
+
+
+            if (Childs != null)
+                for (var i = 0; i < Childs.Count; i++)
+                    if (!Childs[i].TopMost)
+                        Childs[i].Draw();
+
+            if (clipped)
+                g.Graphics.ClipRegionEnd();
         }
 
         public virtual bool IntersectTest(int x, int y)
@@ -156,51 +362,7 @@ namespace GameOverlayExtension.UI
             return x >= Rect.X && y >= Rect.Y && x <= Rect.X + Rect.Width && y <= Rect.Y + Rect.Height;
         }
 
-        private void RefreshRect()
-        {
-            if (HorizontalAlignment == HorizontalAlignment.Left)
-            {
-                Rect.X = Margin.Left;
-                Rect.Width = Width;
-            }
-            if (HorizontalAlignment == HorizontalAlignment.Center)
-            {
-                Rect.X = (g.Graphics.Width / 2) - (Width / 2);
-                Rect.Width = Width;
-            }
-            if (HorizontalAlignment == HorizontalAlignment.Right)
-            {
-                Rect.X = g.Graphics.Width - Width - Margin.Right;
-                Rect.Width = Width;
-            }
-            if (HorizontalAlignment == HorizontalAlignment.Stretch)
-            {
-                Rect.X = Margin.Left;
-                Rect.Width = g.Graphics.Width - Margin.Left - Margin.Right;
-            }
-
-
-            if (VerticalAlignment == VerticalAlignment.Top)
-            {
-                Rect.Y = Margin.Top;
-                Rect.Height = Height;
-            }
-            if (VerticalAlignment == VerticalAlignment.Center)
-            {
-                Rect.Y = (g.Graphics.Height / 2) - (Height / 2);
-                Rect.Height = Height;
-            }
-            if (VerticalAlignment == VerticalAlignment.Bottom)
-            {
-                Rect.Y = g.Graphics.Height - Height - Margin.Bottom;
-                Rect.Height = Height;
-            }
-            if (VerticalAlignment == VerticalAlignment.Stretch)
-            {
-                Rect.Y = Margin.Top;
-                Rect.Height = g.Graphics.Height - Margin.Top - Margin.Bottom;
-            }
-        }
+        #endregion
     }
 
     public struct Thickness
@@ -222,6 +384,11 @@ namespace GameOverlayExtension.UI
             Right = right;
             Bottom = bottom;
         }
+
+        public override string ToString()
+        {
+            return $"{Left} {Top} {Right} {Bottom}";
+        }
     }
 
     public class ControlRectangle
@@ -237,6 +404,11 @@ namespace GameOverlayExtension.UI
             Y = y;
             Width = width;
             Height = height;
+        }
+
+        public override string ToString()
+        {
+            return $"{X} {Y} {Width} {Height}";
         }
     }
 

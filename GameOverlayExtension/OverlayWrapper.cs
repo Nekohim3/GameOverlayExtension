@@ -11,11 +11,8 @@ using GameOverlay.Drawing;
 using GameOverlay.PInvoke;
 using GameOverlay.Windows;
 
-using GameOverlayExtension.UI;
-
-using Nini;
-
 using SharpDX;
+using SharpDX.Direct2D1;
 using SharpDX.Mathematics.Interop;
 
 using Point = GameOverlay.Drawing.Point;
@@ -31,7 +28,7 @@ namespace GameOverlayExtension
         public override event GraphicsSetupHandler   OnGraphicsSetup;
         public override event GraphicsDestroyHandler OnGraphicsDestroy;
         public override event DrawHandler            OnDraw;
-        public override event DrawHandler            OnBeforeDraw;
+        public override event DrawHandler            OnPreDraw;
 
         #endregion
 
@@ -43,6 +40,14 @@ namespace GameOverlayExtension
         public override event MouseHandler OnMouseUp;
         public override event MouseHandler OnMouseMove;
         public override event MouseHandler OnMouseWheel;
+
+        #endregion
+
+        #region Attach
+        
+        public delegate void            AttachEventHandler(TargetStateEnum state);
+
+        public event AttachEventHandler AttachEvent;
 
         #endregion
 
@@ -64,26 +69,33 @@ namespace GameOverlayExtension
         private bool   _graphicLoaded;
         private bool   _windowLoaded;
 
-        private string _attachTargetName;
+        private readonly string _attachTargetName;
+        private readonly int    _currentProcessId;
+        private          int    _targetProcessId;
+        private          IntPtr _targetWindowHandle;
+        private          uint   _foregroundProcessId;
+        private          IntPtr _foregroundWindowHandle;
+        //private          string _foregroundWindowTitle;
 
-        private int    _targetProcessId;
-        private int    _currentProcessId;
-        private int    _foregroundProcessId;
+        private readonly AttachTarget           _attachTargetType;
+        private          TargetStateEnum        _targetState;
+        private          AttachToTargetModeEnum _attachToTargetMode;
 
-        private string _foregroundWindowTitle;
+        public AttachEventsRaiseTypeEnum       AttachEventsRaiseType            { get; set; }
+        public ActionWhenTargetStateChangeEnum ActionWhenTargetStateForeground  { get; set; } = ActionWhenTargetStateChangeEnum.Show;
+        public ActionWhenTargetStateChangeEnum ActionWhenTargetStateBackground  { get; set; } = ActionWhenTargetStateChangeEnum.Hide;
+        public ActionWhenTargetStateChangeEnum ActionWhenTargetStateNone        { get; set; } = ActionWhenTargetStateChangeEnum.Hide;
+        public float                           OpacityWhenTargetStateForeground { get; set; } = 1f;
+        public float                           OpacityWhenTargetStateBackground { get; set; } = 1f;
+        public float                           OpacityWhenTargetStateNone       { get; set; } = 1f;
 
-        public bool WorkWithoutProcess { get; set; }
+        public float CurrentOpacity = 1f;
 
-        private double _aspectRatio;
-        private AttachTarget _attachTargetMode;
-
-        public OverlayWrapper() : base()
+        public OverlayWrapper()
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
             _attachTargetName = "";
 
-            LoadConfig();
-
             var graphics = new Graphics
             {
                 MeasureFPS = true,
@@ -91,38 +103,35 @@ namespace GameOverlayExtension
                 TextAntiAliasing = true,
                 UseMultiThreadedFactories = false,
                 VSync = false,
-                WindowHandle = IntPtr.Zero
+                WindowHandle = IntPtr.Zero,
+                
             };
 
             Window = new GraphicsWindow(graphics)
             {
                 IsTopmost = true,
                 IsVisible = true,
-                FPS = g.Config.GetInt("System", "fps"),
                 X = SystemInformation.VirtualScreen.X,
                 Y = SystemInformation.VirtualScreen.Y,
                 Width = SystemInformation.VirtualScreen.Width,
                 Height = SystemInformation.VirtualScreen.Height,
-                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow
             };
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
-            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
+            Window.PreDrawGraphics += _window_PreDrawGraphics;
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
-        public OverlayWrapper(string p, AttachTarget target = AttachTarget.Process) : base()
+        public OverlayWrapper(string p, AttachTarget target = AttachTarget.Process)
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
             _attachTargetName = p;
 
-            LoadConfig();
-
             var graphics = new Graphics
             {
                 MeasureFPS = true,
-                PerPrimitiveAntiAliasing = false,
+                PerPrimitiveAntiAliasing = true,
                 TextAntiAliasing = true,
                 UseMultiThreadedFactories = false,
                 VSync = false,
@@ -133,98 +142,18 @@ namespace GameOverlayExtension
             {
                 IsTopmost = true,
                 IsVisible = true,
-                FPS = g.Config.GetInt("System", "fps"),
-                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow
+                X         = SystemInformation.VirtualScreen.X,
+                Y         = SystemInformation.VirtualScreen.Y,
+                Width     = SystemInformation.VirtualScreen.Width,
+                Height    = SystemInformation.VirtualScreen.Height,
             };
 
-            _attachTargetMode = target;
+            _attachTargetType = target;
 
             Window.SetupGraphics += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
-            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
+            Window.PreDrawGraphics += _window_PreDrawGraphics;
             Window.DrawGraphics += _window_DrawGraphics;
-        }
-
-        public OverlayWrapper(string p, int surfaceWidth, int surfaceHeight, AttachTarget target = AttachTarget.Process) : base()
-        {
-            _currentProcessId = Process.GetCurrentProcess().Id;
-            _attachTargetName = p;
-
-            LoadConfig();
-
-            var graphics = new Graphics
-            {
-                MeasureFPS = true,
-                PerPrimitiveAntiAliasing = false,
-                TextAntiAliasing = true,
-                UseMultiThreadedFactories = false,
-                VSync = false,
-                WindowHandle = IntPtr.Zero
-            };
-
-            Window = new GraphicsWindow(graphics)
-            {
-                IsTopmost = true,
-                IsVisible = true,
-                FPS = g.Config.GetInt("System", "fps"),
-                Width = surfaceWidth,
-                Height = surfaceHeight,
-                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
-                StaticSize = true,
-                KeepAspectRatio = true
-            };
-
-            _attachTargetMode = target;
-            _aspectRatio = (double) surfaceWidth / (double) surfaceHeight;
-
-            Window.SetupGraphics += _window_SetupGraphics;
-            Window.DestroyGraphics += _window_DestroyGraphics;
-            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
-            Window.DrawGraphics += _window_DrawGraphics;
-        }
-
-        public OverlayWrapper(string p, double aspectRatio, AttachTarget target = AttachTarget.Process) : base()
-        {
-            _currentProcessId = Process.GetCurrentProcess().Id;
-            _attachTargetName = p;
-
-            LoadConfig();
-
-            var graphics = new Graphics
-            {
-                MeasureFPS = true,
-                PerPrimitiveAntiAliasing = false,
-                TextAntiAliasing = true,
-                UseMultiThreadedFactories = false,
-                VSync = false,
-                WindowHandle = IntPtr.Zero
-            };
-
-            Window = new GraphicsWindow(graphics)
-            {
-                IsTopmost = true,
-                IsVisible = true,
-                FPS = g.Config.GetInt("System", "fps"),
-                ExtendedWStyle = ExtendedWindowStyle.Transparent | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow,
-                KeepAspectRatio = true
-            };
-
-            _attachTargetMode = target;
-            _aspectRatio = aspectRatio;
-
-            Window.SetupGraphics += _window_SetupGraphics;
-            Window.DestroyGraphics += _window_DestroyGraphics;
-            Window.BeforeDrawGraphics += _window_BeforeDrawGraphics;
-            Window.DrawGraphics += _window_DrawGraphics;
-        }
-
-        public static void LoadConfig()
-        {
-            g.Config = new NiniConfig("Config.ini");
-            g.Config.AddConfig("Brushes", true);
-            g.Config.AddConfig("Fonts",   true);
-            g.Config.AddConfig("System",  true);
-            g.Config.SetNew("System", "fps", 60, 60);
         }
 
         public override void Run()
@@ -246,9 +175,7 @@ namespace GameOverlayExtension
 
             if (e.Alt && e.KeyCode == Keys.LShiftKey)
                 KeyboardHelper.SwitchLang();
-
-            foreach (var q in Controls.ControlList.Where(x => x is DxTextBox c && c.IsFocused))
-                q.OnKeyDown(q, e);
+            
 
             OnKeyDown?.Invoke(sender, e);
         }
@@ -256,9 +183,7 @@ namespace GameOverlayExtension
         internal override void GHook_KeyUp(object sender, KeyEventArgs e)
         {
             if (!Loaded) return;
-
-            foreach (var q in Controls.ControlList.Where(x => x is DxTextBox c && c.IsFocused))
-                q.OnKeyUp(q, e);
+            
 
             OnKeyUp?.Invoke(sender, e);
         }
@@ -275,12 +200,7 @@ namespace GameOverlayExtension
             //    mx = (int)(mx / Scale.X);
             //    my = (int)(my / Scale.Y);
             //}
-
-            foreach (var q in Controls.ControlList.Where(x => x is DxTextBox))
-                ((DxTextBox) q).IsFocused = false;
-
-            var c = Controls.ControlList.LastOrDefault(x => x.IsMouseOver && !x.IsTransparent);
-            c?.OnMouseDown(c, e, new Point(mx, my));
+            
 
             OnMouseDown?.Invoke(sender, e);
         }
@@ -298,9 +218,6 @@ namespace GameOverlayExtension
             //    my = (int)(my / Scale.Y);
             //}
 
-            var c = Controls.ControlList.LastOrDefault(x => x.IsMouseDown && !x.IsTransparent);
-            c?.OnMouseUp(c, e, new Point(mx, my));
-
             OnMouseUp?.Invoke(sender, e);
         }
 
@@ -317,25 +234,7 @@ namespace GameOverlayExtension
             //    my = (int)(my / Scale.Y);
             //}
 
-            foreach (var q in Controls.ControlList.Where(x => !x.IsTransparent))
-            {
-                if (q.IntersectTest(mx, my))
-                {
-                    if (!q.IsMouseOver)
-                    {
-                        q.OnMouseEnter(q, e, new Point(mx, my));
-                    }
-
-                    q.OnMouseMove(q, e, new Point(mx, my));
-                }
-                else
-                {
-                    if (q.IsMouseOver)
-                    {
-                        q.OnMouseLeave(q, e, new Point(mx, my));
-                    }
-                }
-            }
+           
 
             OnMouseMove?.Invoke(sender, e);
         }
@@ -351,144 +250,290 @@ namespace GameOverlayExtension
         {
             while (!Loaded)
                 Thread.Sleep(1);
-
-            BrushCollection.Init();
-
-            FontCollection.Init();
-
-            BrushCollection.Add("Test",  0xffcc1111);
-            BrushCollection.Add("Test2", 0x33cc1111);
-            FontCollection.Add("TestFont", "Verdana", 36);
-
-            //TODO: sort names
-
-            BrushCollection.Add("Window.Fill",   0xff111111);
-            BrushCollection.Add("Window.Stroke", 0xffcc1111);
-
-            BrushCollection.Add("Window.Font", 0xffcc1111);
-            FontCollection.Add("Window.Title.Font", "Verdana", 12);
-
-            BrushCollection.Add("Control.Transparent", 0x0);
-
-            BrushCollection.Add("Control.Fill",   0xff191919);
-            BrushCollection.Add("Control.Stroke", 0xffcc1111);
-
-            BrushCollection.Add("Control.Font", 0xffcc1111);
-            FontCollection.Add("Control.Font", "Verdana", 12);
-
-            BrushCollection.Add("Control.Fill.MouseOver",   0xff292929);
-            BrushCollection.Add("Control.Stroke.MouseOver", 0xffcc1111);
-
-            BrushCollection.Add("Control.Fill.Pressed",   0xff295929);
-            BrushCollection.Add("Control.Stroke.Pressed", 0xff11cc11);
-
-            BrushCollection.Add("Toggle.Indicator.Fill",                0);
-            BrushCollection.Add("Toggle.Indicator.Hover.Fill",          0);
-            BrushCollection.Add("Toggle.Indicator.Stroke",              0xff222222);
-            BrushCollection.Add("Toggle.Indicator.Hover.Stroke",        0xff444444);
-            BrushCollection.Add("Toggle.Indicator.Active.Fill",         0xff326496);
-            BrushCollection.Add("Toggle.Indicator.Active.Hover.Fill",   0xff6496C8);
-            BrushCollection.Add("Toggle.Indicator.Inactive.Fill",       0xff642E2E);
-            BrushCollection.Add("Toggle.Indicator.Inactive.Hover.Fill", 0xff9E4848);
-
-            BrushCollection.Add("TextBox.Focused.Fill",   0xff292929);
-            BrushCollection.Add("TextBox.Focused.Stroke", 0xffcc5555);
-
-            BrushCollection.Add("TrackBar.Font", 0xffcccccc);
-            FontCollection.Add("TrackBar.Font", "Verdana", 12);
-
-            BrushCollection.Add("TrackBar.Fill",                0);
-            BrushCollection.Add("TrackBar.Fill.Hover",          0);
-            BrushCollection.Add("TrackBar.Stroke",              0xff444450);
-            BrushCollection.Add("TrackBar.Stroke.Hover",        0xff444450);
-            BrushCollection.Add("TrackBar.Bar.Fill",            0xff326496);
-            BrushCollection.Add("TrackBar.Bar.Fill.Hover",      0xff6496c8);
-            BrushCollection.Add("TrackBar.Bar.Stroke",          0xff444450);
-            BrushCollection.Add("TrackBar.Bar.Stroke.Hover",    0xff444450);
-            BrushCollection.Add("TrackBar.Slider.Fill",         0xff444450);
-            BrushCollection.Add("TrackBar.Slider.Fill.Hover",   0xffcccccc);
-            BrushCollection.Add("TrackBar.Slider.Stroke",       0xff444450);
-            BrushCollection.Add("TrackBar.Slider.Stroke.Hover", 0xffcccccc);
-
+            
             OnGraphicsSetup?.Invoke(sender, e);
+
+            //User32.SetForegroundWindow(User32.GetWindow(Process.GetCurrentProcess().MainWindowHandle, 0));
+            g.Window.Hide();
 
             _graphicLoaded = true;
         }
 
-        internal override void _window_BeforeDrawGraphics(object sender, DrawGraphicsEventArgs e)
+        internal override void _window_PreDrawGraphics(object sender, DrawGraphicsEventArgs e)
         {
             if (!Loaded) return;
             if (!_windowLoaded) return;
 
             #region Attach
 
-            if (_attachTargetName != "")
+            try
             {
-                if (_attachTargetMode == AttachTarget.Process)
+                if (_attachTargetName != "")
                 {
-                    _foregroundProcessId = User32.GetForegroundWindow().ToInt32();
-                    var processes = Process.GetProcessesByName(_attachTargetName);
-
-                    if (processes.Length != 0)
+                    if (_attachTargetType == AttachTarget.Process)
                     {
-                        if (!g.Window.IsVisible)
-                            g.Window.Show();
+                        var foregroundWindowHandle = User32.GetForegroundWindow();
 
-                        _targetProcessId = processes.First().Id;
-                        var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
-                        g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
-
-                        if(_aspectRatio.CloseTo(0))
-                            g.Window.FitToWindow(targetProcessMainWindowHandle);
-                        else
-                            g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
-                    }
-                    else
-                    {
-                        _targetProcessId = -1;
-
-                        if (WorkWithoutProcess)
+                        if (foregroundWindowHandle != _foregroundWindowHandle)
                         {
-                            if (g.Window.IsVisible)
-                                g.Window.Hide();
+                            _foregroundWindowHandle = foregroundWindowHandle;
+                            User32.GetWindowThreadProcessId(_foregroundWindowHandle, ref _foregroundProcessId);
+                            var processes = Process.GetProcessesByName(_attachTargetName);
+
+                            if (processes.Length != 0)
+                            {
+                                _targetProcessId = processes.First().Id; 
+                                if ( _targetProcessId == _foregroundProcessId || _foregroundProcessId == _currentProcessId)
+                                {
+                                    _targetWindowHandle = processes.First().MainWindowHandle;
+
+                                    if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                    {
+                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.Foreground)
+                                            AttachEvent?.Invoke(TargetStateEnum.Foreground);
+                                        else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
+                                            AttachEvent?.Invoke(TargetStateEnum.Foreground);
+                                    }
+
+                                    _targetState = TargetStateEnum.Foreground;
+
+                                    if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
+                                    {
+                                        if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Exit)
+                                            Process.GetCurrentProcess().Kill(); //Поменять
+
+                                        if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Show)
+                                        {
+                                            g.Window.Show();
+                                            g.Window.PlaceAbove(_targetWindowHandle);
+                                            g.Window.FitTo(_targetWindowHandle, true);
+                                        }
+
+                                        if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Hide)
+                                            g.Window.Hide();
+
+                                        if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.OpacityChange)
+                                        {
+                                            CurrentOpacity = OpacityWhenTargetStateForeground;
+                                            g.Window.PlaceAbove(_targetWindowHandle);
+                                            g.Window.FitTo(_targetWindowHandle, true);
+                                        }
+                                        else
+                                            CurrentOpacity = 1f;
+                                    }
+
+                                    //foreground
+
+                                        //if (!g.Window.IsVisible)
+                                        //    g.Window.Show();
+
+                                        //g.Window.PlaceAbove(_targetWindowHandle);
+                                        //g.Window.FitTo(_targetWindowHandle, true);
+                                }
+                                else
+                                {
+                                    if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                    {
+                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.Background)
+                                            AttachEvent?.Invoke(TargetStateEnum.Background);
+                                        else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
+                                            AttachEvent?.Invoke(TargetStateEnum.Background);
+                                    }
+
+                                    _targetState = TargetStateEnum.Background;
+
+                                    if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
+                                    {
+                                        if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Exit)
+                                            Process.GetCurrentProcess().Kill(); //Поменять
+
+                                        if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Show)
+                                        {
+                                            g.Window.Show();
+                                            g.Window.PlaceAbove(_targetWindowHandle);
+                                            g.Window.FitTo(_targetWindowHandle, true);
+                                        }
+
+                                        if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Hide)
+                                            g.Window.Hide();
+
+                                        if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.OpacityChange)
+                                        {
+                                            CurrentOpacity = OpacityWhenTargetStateBackground;
+                                            g.Window.PlaceAbove(_targetWindowHandle);
+                                            g.Window.FitTo(_targetWindowHandle, true);
+                                        }
+                                        else
+                                            CurrentOpacity = 1f;
+                                    }
+                                    //background
+                                    //_targetProcessId    = -1;
+                                    //_targetWindowHandle = IntPtr.Zero;
+
+                                        //if (g.Window.IsVisible)
+                                        //    g.Window.Hide();
+                                }
+                            }
+                            else
+                            {
+                                if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                {
+                                    if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.None)
+                                        AttachEvent?.Invoke(TargetStateEnum.None);
+                                    else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
+                                        AttachEvent?.Invoke(TargetStateEnum.None);
+                                }
+
+                                _targetState = TargetStateEnum.None;
+
+                                if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                {
+                                    if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Exit)
+                                        Process.GetCurrentProcess().Kill(); //Поменять
+
+                                    if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Show)
+                                    {
+                                        g.Window.Show();
+                                        g.Window.PlaceAbove(_targetWindowHandle);
+                                        g.Window.FitTo(_targetWindowHandle, true);
+                                    }
+
+                                    if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Hide)
+                                        g.Window.Hide();
+
+                                    if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.OpacityChange)
+                                    {
+                                        CurrentOpacity = OpacityWhenTargetStateNone;
+                                        g.Window.PlaceAbove(_targetWindowHandle);
+                                        g.Window.FitTo(_targetWindowHandle, true);
+                                    }
+                                    else
+                                        CurrentOpacity = 1f;
+                                } //none
+                            }
+
+                            
                         }
                         else
                         {
-                            OnAppExit();
-                            g.Overlay.StopHook();
-                            g.Overlay.Window.Graphics.Dispose();
-                            Process.GetCurrentProcess().Kill();
+                            //not change
+                            if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
+                                    AttachEvent?.Invoke(TargetStateEnum.None);
+
+                            if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                            {
+                                if (g.Window.IsVisible)
+                                {
+                                    g.Window.PlaceAbove(_targetWindowHandle);
+                                    g.Window.FitTo(_targetWindowHandle, true);
+                                }
+                            }
+
+                            //if (_targetWindowHandle != IntPtr.Zero)
+                            //{
+                            //    g.Window.PlaceAbove(_targetWindowHandle);
+                            //    g.Window.FitTo(_targetWindowHandle, true);
+                            //}
                         }
                     }
-                }
-                else if(_attachTargetMode == AttachTarget.ActiveWindowTitle)
-                {
-                    _foregroundWindowTitle = User32.GetActiveWindowTitle();
-
-                    if (_foregroundWindowTitle != null)
-                    {
-                        if (_foregroundWindowTitle.Contains(_attachTargetName))
-                        {
-                            if (!g.Window.IsVisible)
-                                g.Window.Show();
-
-                            var targetProcessMainWindowHandle = User32.GetForegroundWindow();
-                            g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
-
-                            g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
-                        }
-                        else
-                        {
-                            if (g.Window.IsVisible)
-                                g.Window.Hide();
-                        }
-                    }
+                    else { }
                 }
             }
+            catch (Exception exception) { }
+            //if (_attachTargetName != "")
+            //{
+            //    if (_attachTargetMode == AttachTarget.Process)
+            //    {
+            //        _foregroundWindowHandle = User32.GetForegroundWindow();
+            //        User32.GetWindowThreadProcessId(_foregroundWindowHandle, out _foregroundProcessId);
+            //        var processes = Process.GetProcessesByName(_attachTargetName);
+
+            //        if (processes.Length != 0)
+            //        {
+            //            _targetProcessId = processes.First().Id;
+
+            //            if (_targetProcessId == _foregroundProcessId || _foregroundProcessId == _currentProcessId)
+            //            {
+            //                //if (HideOverlayWhenTargetWindowNoForeground)
+            //                //{
+            //                    if (!g.Window.IsVisible)
+            //                        g.Window.Show();
+            //                //}
+            //                //else
+            //                //{
+            //                    if (!g.Window.IsTopmost)
+            //                        g.Window.MakeTopmost();
+            //                //}
+
+            //                var targetProcessMainWindowHandle = processes.First().MainWindowHandle;
+            //                g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+
+            //                if (_aspectRatio.CloseTo(0))
+            //                    g.Window.FitToWindow(targetProcessMainWindowHandle);
+            //                else
+            //                    g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
+            //            }
+            //            else
+            //            {
+            //                if (HideOverlayWhenTargetWindowNoForeground)
+            //                {
+            //                    if (g.Window.IsVisible)
+            //                        g.Window.Hide();
+            //                }
+            //                else
+            //                {
+            //                    if (g.Window.IsTopmost)
+            //                        g.Window.RemoveTopmost();
+            //                }
+            //            }
+            //        }
+            //        else
+            //        {
+            //            _targetProcessId = -1;
+
+            //            if (WorkWithoutProcess)
+            //            {
+            //                if (g.Window.IsVisible)
+            //                    g.Window.Hide();
+            //            }
+            //            else
+            //            {
+            //                OnAppExit();
+            //                g.Overlay.StopHook();
+            //                g.Overlay.Window.Graphics.Dispose();
+            //                Process.GetCurrentProcess().Kill();
+            //            }
+            //        }
+            //    }
+            //    else if(_attachTargetMode == AttachTarget.ActiveWindowTitle)
+            //    {
+            //        _foregroundWindowTitle = User32.GetActiveWindowTitle();
+
+            //        if (_foregroundWindowTitle != null)
+            //        {
+            //            if (_foregroundWindowTitle.Contains(_attachTargetName))
+            //            {
+            //                if (!g.Window.IsVisible)
+            //                    g.Window.Show();
+
+            //                var targetProcessMainWindowHandle = User32.GetForegroundWindow();
+            //                g.Window.PlaceAboveWindow(targetProcessMainWindowHandle);
+
+            //                g.Window.FitToWindow(targetProcessMainWindowHandle, _aspectRatio);
+            //            }
+            //            else
+            //            {
+            //                if (g.Window.IsVisible)
+            //                    g.Window.Hide();
+            //            }
+            //        }
+            //    }
+            //}
 
             #endregion
 
-            OnBeforeDraw?.Invoke(sender, e);
+            OnPreDraw?.Invoke(sender, e);
         }
 
         internal override void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
@@ -498,9 +543,37 @@ namespace GameOverlayExtension
 
             e.Graphics.ClearScene();
 
-            Controls.Draw();
+            var layerUsed = false;
+
+            if (!CurrentOpacity.CloseTo(1f))
+            {
+                var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = CurrentOpacity };
+                g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
+                layerUsed = true;
+            }
+            //if (_targetState == TargetStateEnum.Foreground && !OpacityWhenTargetStateForeground.CloseTo(1f))
+            //{
+            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateForeground };
+            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
+            //    layerUsed = true;
+            //}
+            //if (_targetState == TargetStateEnum.Background && !OpacityWhenTargetStateBackground.CloseTo(1f))
+            //{
+            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateBackground };
+            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
+            //    layerUsed = true;
+            //}
+            //if (_targetState == TargetStateEnum.None && !OpacityWhenTargetStateNone.CloseTo(1f))
+            //{
+            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateNone };
+            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
+            //    layerUsed = true;
+            //}
 
             OnDraw?.Invoke(sender, e);
+
+            if(layerUsed)
+                g.Graphics.GetRenderTarget().PopLayer();
         }
 
         internal override void _window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
@@ -512,7 +585,6 @@ namespace GameOverlayExtension
 
         ~OverlayWrapper()
         {
-            // you do not need to dispose the Graphics surface
             Window.Dispose();
         }
     }
@@ -520,6 +592,33 @@ namespace GameOverlayExtension
     public enum AttachTarget
     {
         Process,
-        ActiveWindowTitle
+        Window
+    }
+
+    public enum TargetStateEnum
+    {
+        None,
+        Foreground,
+        Background
+    }
+
+    public enum AttachToTargetModeEnum
+    {
+        Automatic,
+        Manual
+    }
+
+    public enum AttachEventsRaiseTypeEnum
+    {
+        Always,
+        OnChangeTargetState
+    }
+
+    public enum ActionWhenTargetStateChangeEnum
+    {
+        Exit,
+        Hide,
+        Show,
+        OpacityChange
     }
 }

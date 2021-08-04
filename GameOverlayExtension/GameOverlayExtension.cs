@@ -11,9 +11,11 @@ using System.Windows.Forms;
 using GameOverlay.Drawing;
 using GameOverlay.Windows;
 
+using GameOverlayExtension.UI;
+
 using Gma.System.MouseKeyHook;
 
-using Nini;
+using SharpDX.Direct2D1;
 
 namespace GameOverlayExtension
 {
@@ -32,7 +34,7 @@ namespace GameOverlayExtension
         public virtual event GraphicsSetupHandler   OnGraphicsSetup;
         public virtual event GraphicsDestroyHandler OnGraphicsDestroy;
         public virtual event DrawHandler            OnDraw;
-        public virtual event DrawHandler            OnBeforeDraw;
+        public virtual event DrawHandler            OnPreDraw;
 
         #endregion
 
@@ -58,8 +60,11 @@ namespace GameOverlayExtension
 
         public IKeyboardMouseEvents GHook;
         public bool                 UseHook;
+        public List<DxControl>      TopList = new List<DxControl>();
 
-        internal bool Loaded;
+        protected Layer           _layer;
+
+        internal bool         Loaded;
 
         protected GameOverlayExtension() { }
 
@@ -70,13 +75,18 @@ namespace GameOverlayExtension
             g.Overlay  = this;
             g.Graphics = Window.Graphics;
             g.Window   = Window;
-            Window.StartThread();
+            Window.Create();
 
             while (!g.Graphics.IsInitialized)
                 Thread.Sleep(10);
+            
+            _layer           = new Layer(g.Graphics.GetRenderTarget());
 
             if (UseHook)
                 StartHook();
+
+            g.Window.Deactivate();
+            g.DxWindow = new DxWindow("");
 
             Loaded = true;
         }
@@ -91,10 +101,10 @@ namespace GameOverlayExtension
             GHook.MouseMove  += GHook_MouseMove;
             GHook.MouseWheel += GHook_MouseWheel;
 
-            //#if !DEBUG
-            AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-            Application.ThreadException += UnhandledException;
-            //#endif
+            ////#if !DEBUG
+            //AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+            //Application.ThreadException += UnhandledException;
+            ////#endif
         }
 
         public virtual void StopHook()
@@ -102,48 +112,49 @@ namespace GameOverlayExtension
             GHook?.Dispose();
         }
 
-        public virtual void UnhandledException(object sender, UnhandledExceptionEventArgs args)
-        {
-            StopHook();
-            var e = args.ExceptionObject as Exception;
+        //public virtual void UnhandledException(object sender, UnhandledExceptionEventArgs args)
+        //{
+        //    StopHook();
+        //    var e = args.ExceptionObject as Exception;
 
-            var exStr =
-                $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
+        //    var exStr =
+        //        $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
 
-            using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
-            using (var sw = new StreamWriter(fs))
-                sw.Write(exStr);
-            MsgBox();
-            Process.GetCurrentProcess().Kill();
-        }
+        //    using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
+        //    using (var sw = new StreamWriter(fs))
+        //        sw.Write(exStr);
+        //    MsgBox();
+        //    Process.GetCurrentProcess().Kill();
+        //}
 
-        public virtual void UnhandledException(object sender, ThreadExceptionEventArgs args)
-        {
-            StopHook();
-            var e = args.Exception;
+        //public virtual void UnhandledException(object sender, ThreadExceptionEventArgs args)
+        //{
+        //    StopHook();
+        //    var e = args.Exception;
 
-            var exStr =
-                $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
+        //    var exStr =
+        //        $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}\n\nMessage:\n{e.Message}\n\n\nSource:\n{e.Source}\n\n\nStackTrace\n{e.StackTrace}\n\n\n";
 
-            using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
-            using (var sw = new StreamWriter(fs))
-                sw.Write(exStr);
-            MsgBox();
-            Process.GetCurrentProcess().Kill();
-        }
-        static void MsgBox()
-        {
-            Form f = new Form { WindowState = FormWindowState.Maximized, FormBorderStyle = FormBorderStyle.None, Opacity = 0, ShowInTaskbar = false};
+        //    using (var fs = new FileStream("Exception.txt", FileMode.Append, FileAccess.Write))
+        //    using (var sw = new StreamWriter(fs))
+        //        sw.Write(exStr);
+        //    MsgBox();
+        //    Process.GetCurrentProcess().Kill();
+        //}
+        //static void MsgBox()
+        //{
+        //    Form f = new Form { WindowState = FormWindowState.Maximized, FormBorderStyle = FormBorderStyle.None, Opacity = 0, ShowInTaskbar = false};
 
-            f.Load += (sender, args) =>
-            {
-                MessageBox.Show("Возникла непредвиденная ошибка! Детали находятся в файле Exception.txt", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                f.Close();
-            };
+        //    f.Load += (sender, args) =>
+        //    {
+        //        MessageBox.Show("Возникла непредвиденная ошибка! Детали находятся в файле Exception.txt", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //        f.Close();
+        //    };
 
-            f.TopMost = true;
-            f.Show();
-        }
+        //    f.TopMost = true;
+        //    f.Show();
+        //}
+
         internal abstract void GHook_KeyDown(object sender, KeyEventArgs e);
 
         internal abstract void GHook_KeyUp(object sender, KeyEventArgs e);
@@ -158,7 +169,7 @@ namespace GameOverlayExtension
 
         internal abstract void _window_SetupGraphics(object sender, SetupGraphicsEventArgs e);
 
-        internal abstract void _window_BeforeDrawGraphics(object sender, DrawGraphicsEventArgs e);
+        internal abstract void _window_PreDrawGraphics(object sender, DrawGraphicsEventArgs e);
 
         internal abstract void _window_DrawGraphics(object sender, DrawGraphicsEventArgs e);
 
