@@ -252,8 +252,7 @@ namespace GameOverlayExtension
                 Thread.Sleep(1);
             
             OnGraphicsSetup?.Invoke(sender, e);
-
-            //User32.SetForegroundWindow(User32.GetWindow(Process.GetCurrentProcess().MainWindowHandle, 0));
+            
             g.Window.Hide();
 
             _graphicLoaded = true;
@@ -321,14 +320,6 @@ namespace GameOverlayExtension
                                         else
                                             CurrentOpacity = 1f;
                                     }
-
-                                    //foreground
-
-                                        //if (!g.Window.IsVisible)
-                                        //    g.Window.Show();
-
-                                        //g.Window.PlaceAbove(_targetWindowHandle);
-                                        //g.Window.FitTo(_targetWindowHandle, true);
                                 }
                                 else
                                 {
@@ -366,12 +357,6 @@ namespace GameOverlayExtension
                                         else
                                             CurrentOpacity = 1f;
                                     }
-                                    //background
-                                    //_targetProcessId    = -1;
-                                    //_targetWindowHandle = IntPtr.Zero;
-
-                                        //if (g.Window.IsVisible)
-                                        //    g.Window.Hide();
                                 }
                             }
                             else
@@ -421,20 +406,18 @@ namespace GameOverlayExtension
                                 if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
                                     AttachEvent?.Invoke(TargetStateEnum.None);
 
-                            if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                            if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
                             {
                                 if (g.Window.IsVisible)
                                 {
-                                    g.Window.PlaceAbove(_targetWindowHandle);
-                                    g.Window.FitTo(_targetWindowHandle, true);
+                                    if (_targetWindowHandle != IntPtr.Zero)
+                                    {
+                                        g.Window.PlaceAbove(_targetWindowHandle);
+
+                                        g.Window.FitTo(_targetWindowHandle, true);
+                                    }
                                 }
                             }
-
-                            //if (_targetWindowHandle != IntPtr.Zero)
-                            //{
-                            //    g.Window.PlaceAbove(_targetWindowHandle);
-                            //    g.Window.FitTo(_targetWindowHandle, true);
-                            //}
                         }
                     }
                     else { }
@@ -551,24 +534,6 @@ namespace GameOverlayExtension
                 g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
                 layerUsed = true;
             }
-            //if (_targetState == TargetStateEnum.Foreground && !OpacityWhenTargetStateForeground.CloseTo(1f))
-            //{
-            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateForeground };
-            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
-            //    layerUsed = true;
-            //}
-            //if (_targetState == TargetStateEnum.Background && !OpacityWhenTargetStateBackground.CloseTo(1f))
-            //{
-            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateBackground };
-            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
-            //    layerUsed = true;
-            //}
-            //if (_targetState == TargetStateEnum.None && !OpacityWhenTargetStateNone.CloseTo(1f))
-            //{
-            //    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = OpacityWhenTargetStateNone };
-            //    g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
-            //    layerUsed = true;
-            //}
 
             OnDraw?.Invoke(sender, e);
 
