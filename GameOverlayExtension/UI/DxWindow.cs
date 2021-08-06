@@ -23,50 +23,50 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        public DxWindow(string name) : base(name)
+        public DxWindow(GameOverlayExtension overlay, string name) : base(overlay, name)
         {
             BorderThickness = 1;
-            Width           = g.Window.Width;
-            Height          = g.Window.Height;
-            Border          = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
-            Fill            = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
+            Width           = overlay.Window.Width;
+            Height          = overlay.Window.Height;
+            Border          = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
+            Fill            = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
             DrawOnTopList   = new List<DxControl>();
         }
 
-        public override void Draw()
+        public override void Draw(Graphics graphics)
         {
-            g.Graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            base.Draw();
+            graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+            base.Draw(graphics);
 
             for (var i = 0; i < DrawOnTopList.Count; i++)
-                DrawOnTopList[i].Draw();
+                DrawOnTopList[i].Draw(graphics);
         }
 
-        public new void RefreshRect()
+        public new void RefreshRect(int width, int height)
         {
-            Width  = g.Window.Width;
-            Height = g.Window.Height;
+            Width  = width;
+            Height = height;
             base.RefreshRect();
         }
 
         #endregion
 
-        public override bool OnMouseDown(DxControl ctl, MouseEventArgs args, Point pt)
+        public override bool OnMouseDown(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             for (var i = DrawOnTopList.Count - 1; i >= 0; i--)
-                if (DrawOnTopList[i].OnMouseDown(DrawOnTopList[i], args, pt))
+                if (DrawOnTopList[i].OnMouseDown(window, DrawOnTopList[i], args, pt))
                     return true;
 
-            return base.OnMouseDown(ctl, args, pt);
+            return base.OnMouseDown(window, ctl, args, pt);
         }
 
-        public override bool OnMouseMove(DxControl ctl, MouseEventArgs args, Point pt)
+        public override bool OnMouseMove(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             for (var i = DrawOnTopList.Count - 1; i >= 0; i--)
-                if (DrawOnTopList[i].OnMouseMove(DrawOnTopList[i], args, pt))
+                if (DrawOnTopList[i].OnMouseMove(window, DrawOnTopList[i], args, pt))
                     return true;
 
-            return base.OnMouseMove(ctl, args, pt);
+            return base.OnMouseMove(window, ctl, args, pt);
         }
     }
 }

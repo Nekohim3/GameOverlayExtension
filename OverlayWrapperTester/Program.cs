@@ -54,7 +54,9 @@ namespace OverlayWrapperTester
             // g.Overlay.OnMouseUp    += Overlay_OnMouseUp;
             // g.Overlay.OnMouseMove  += Overlay_OnMouseMove;
             // g.Overlay.OnMouseWheel += Overlay_OnMouseWheel;
-            g.Graphics             =  g.Overlay.Window.Graphics;
+            g.Graphics = g.Overlay.Window.Graphics;
+            g.Window   = g.Overlay.Window;
+            g.DxWindow = g.Overlay.DxWindow;
             g.Overlay.Run();
 
             g.Overlay.AttachToTargetMode               = AttachToTargetModeEnum.Automatic;
@@ -64,7 +66,7 @@ namespace OverlayWrapperTester
             g.Overlay.ActionWhenTargetStateNone        = ActionWhenTargetStateChangeEnum.Exit;
             g.Overlay.OpacityWhenTargetStateBackground = 0.5f;
 
-            var dxComboBoxSingle = new DxComboBox("dxComboBoxSingle") { MultiSelect = false, Margin = new Thickness(50, 50, 0, 0) };
+            var dxComboBoxSingle = new DxComboBox(g.Overlay, "dxComboBoxSingle") { MultiSelect = false, Margin = new Thickness(50, 50, 0, 0) };
             dxComboBoxSingle.Items.Add("Test0");
             dxComboBoxSingle.Items.Add("Test1");
             dxComboBoxSingle.Items.Add("Test2");
@@ -75,9 +77,9 @@ namespace OverlayWrapperTester
             dxComboBoxSingle.Items.Add("Test7");
             dxComboBoxSingle.Items.Add("Test8");
             dxComboBoxSingle.Items.Add("Test9");
-            GameOverlayExtension.g.DxWindow.AddChild(dxComboBoxSingle);
+            g.Overlay.DxWindow.AddChild(dxComboBoxSingle);
 
-            var dxComboBoxMulti = new DxComboBox("dxComboBoxSingle") { MultiSelect = true, Margin = new Thickness(250, 50, 0, 0) };
+            var dxComboBoxMulti = new DxComboBox(g.Overlay, "dxComboBoxSingle") { MultiSelect = true, Margin = new Thickness(250, 50, 0, 0) };
             dxComboBoxMulti.Items.Add("Test0");
             dxComboBoxMulti.Items.Add("Test1");
             dxComboBoxMulti.Items.Add("Test2");
@@ -88,20 +90,20 @@ namespace OverlayWrapperTester
             dxComboBoxMulti.Items.Add("Test7");
             dxComboBoxMulti.Items.Add("Test8");
             dxComboBoxMulti.Items.Add("Test9");
-            GameOverlayExtension.g.DxWindow.AddChild(dxComboBoxMulti);
+            g.Overlay.DxWindow.AddChild(dxComboBoxMulti);
 
-            var dxButton = new DxButton("dxButton", "Test button") { Margin = new Thickness(0, 50, 50, 0), HorizontalAlignment = HorizontalAlignment.Right };
+            var dxButton = new DxButton(g.Overlay, "dxButton", "Test button") { Margin = new Thickness(0, 50, 50, 0), HorizontalAlignment = HorizontalAlignment.Right };
             var counter  = 0;
             dxButton.MouseDown += (ctl, args, pt) =>
             {
                 dxButton.Text.Text = counter++.ToString();
             };
 
-            var dxGroupBox = new DxGroupBox("dxGroupBox", "Test groupBox") { Width = 300, Height = 150, Margin = new Thickness(50, 200, 0, 0) };
+            var dxGroupBox = new DxGroupBox(g.Overlay, "dxGroupBox", "Test groupBox") { Width = 300, Height = 150, Margin = new Thickness(50, 200, 0, 0) };
             dxGroupBox.AddChild(dxButton);
-            GameOverlayExtension.g.DxWindow.AddChild(dxGroupBox);
+            g.DxWindow.AddChild(dxGroupBox);
 
-            GameOverlayExtension.g.DxWindow.Fill.Color = new Color(8, 8, 13);
+            g.DxWindow.Fill.Color = new Color(8, 8, 13);
             
             Application.Run();
         }

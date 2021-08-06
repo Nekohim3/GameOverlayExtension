@@ -36,20 +36,20 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        public DxGroupBox(string name, string text) : base(name)
+        public DxGroupBox(GameOverlayExtension overlay, string name, string text) : base(overlay, name)
         {
             BorderThickness = 0;
-            Width = 100;
-            Height = 100;
-            Text = new TextHelper(text) { ParagraphAlignment = ParagraphAlignment.Center, FontWeight = FontWeight.SemiBold, TextAntialiasMode = TextAntialiasMode.Grayscale };
-            Fill = g.Graphics.CreateSolidBrush(0, 11, 22);
-            Border = g.Graphics.CreateSolidBrush(6, 25, 37);
-            Separator = g.Graphics.CreateSolidBrush(1, 27, 43);
-            Header = g.Graphics.CreateSolidBrush(242, 242, 242);
+            Width           = 100;
+            Height          = 100;
+            Text            = new TextHelper(text) { ParagraphAlignment = ParagraphAlignment.Center, FontWeight = FontWeight.SemiBold, TextAntialiasMode = TextAntialiasMode.Grayscale };
+            Fill            = overlay.Window.Graphics.CreateSolidBrush(0, 11, 22);
+            Border          = overlay.Window.Graphics.CreateSolidBrush(6,   25,  37);
+            Separator       = overlay.Window.Graphics.CreateSolidBrush(1,   27,  43);
+            Header          = overlay.Window.Graphics.CreateSolidBrush(242, 242, 242);
 
-            HeaderFont = g.Graphics.CreateFont("museosanscyrl-900", 15);
+            HeaderFont = overlay.Window.Graphics.CreateFont("museosanscyrl-900", 15);
 
-            var grid = new DxGrid($"{name}>Grid")
+            var grid = new DxGrid(overlay, $"{name}>Grid")
             {
                 Parent = this,
                 BorderThickness = 1,
@@ -61,12 +61,12 @@ namespace GameOverlayExtension.UI
             base.AddChild(grid);
         }
 
-        public override void Draw()
+        public override void Draw(Graphics graphics)
         {
-            g.Graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            g.Graphics.FillRectangle(Separator, Rect.X + 5, Rect.Y + 30, Rect.Width - 10, 2);
-            g.Graphics.DrawText(Text, HeaderFont, Header, null, Rect.X + 10, Rect.Y, Rect.Width - 10, 30);
-            base.Draw();
+            graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+            graphics.FillRectangle(Separator, Rect.X + 5, Rect.Y + 30, Rect.Width - 10, 2);
+            graphics.DrawText(Text, HeaderFont, Header, null, Rect.X + 10, Rect.Y, Rect.Width - 10, 30);
+            base.Draw(graphics);
         }
 
         public override void AddChild(DxControl ctl)

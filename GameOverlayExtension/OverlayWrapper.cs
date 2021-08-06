@@ -151,10 +151,11 @@ namespace GameOverlayExtension
 
             _attachTargetType = target;
 
-            Window.SetupGraphics += _window_SetupGraphics;
+            Window.SetupGraphics   += _window_SetupGraphics;
             Window.DestroyGraphics += _window_DestroyGraphics;
             Window.PreDrawGraphics += _window_PreDrawGraphics;
-            Window.DrawGraphics += _window_DrawGraphics;
+            Window.DrawGraphics    += _window_DrawGraphics;
+            Window.SizeChanged     += _window_SizeChanged;
         }
 
         public override void Run()
@@ -179,10 +180,10 @@ namespace GameOverlayExtension
 
             if (e.KeyCode == Keys.Insert)
             {
-                if (g.Window.IsActivated)
-                    g.Window.Deactivate();
+                if (Window.IsActivated)
+                    Window.Deactivate();
                 else
-                    g.Window.Activate();
+                    Window.Activate();
             }
             
 
@@ -201,8 +202,8 @@ namespace GameOverlayExtension
         {
             if (!Loaded) return;
 
-            var mx = e.X - g.Overlay.Window.X;
-            var my = e.Y - g.Overlay.Window.Y;
+            var mx = e.X - Window.X;
+            var my = e.Y - Window.Y;
 
             //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
             //{
@@ -210,7 +211,7 @@ namespace GameOverlayExtension
             //    my = (int)(my / Scale.Y);
             //}
 
-            g.DxWindow.OnMouseDown(g.DxWindow, e, new SharpDX.Point(mx, my));
+            DxWindow.OnMouseDown(DxWindow, DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseDown?.Invoke(sender, e);
         }
@@ -219,15 +220,15 @@ namespace GameOverlayExtension
         {
             if (!Loaded) return;
 
-            var mx = e.X - g.Overlay.Window.X;
-            var my = e.Y - g.Overlay.Window.Y;
+            var mx = e.X - Window.X;
+            var my = e.Y - Window.Y;
 
             //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
             //{
             //    mx = (int)(mx / Scale.X);
             //    my = (int)(my / Scale.Y);
             //}
-            g.DxWindow.OnMouseUp(g.DxWindow, e, new SharpDX.Point(mx, my));
+            DxWindow.OnMouseUp(DxWindow, DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseUp?.Invoke(sender, e);
         }
@@ -236,16 +237,15 @@ namespace GameOverlayExtension
         {
             if (!Loaded) return;
 
-            var mx = e.X - g.Overlay.Window.X;
-            var my = e.Y - g.Overlay.Window.Y;
+            var mx = e.X - Window.X;
+            var my = e.Y - Window.Y;
 
             //if (ScaleMode == DrawingAreaScaleMode.ScaleAll)
             //{
             //    mx = (int)(mx / Scale.X);
             //    my = (int)(my / Scale.Y);
             //}
-
-            g.DxWindow.OnMouseMove(g.DxWindow, e, new SharpDX.Point(mx, my));
+            DxWindow.OnMouseMove(DxWindow, DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseMove?.Invoke(sender, e);
         }
@@ -254,10 +254,10 @@ namespace GameOverlayExtension
         {
             if (!Loaded) return;
 
-            var mx = e.X - g.Overlay.Window.X;
-            var my = e.Y - g.Overlay.Window.Y;
+            var mx = e.X - Window.X;
+            var my = e.Y - Window.Y;
             
-            g.DxWindow.OnMouseWheel(g.DxWindow, e, new SharpDX.Point(mx, my));
+            DxWindow.OnMouseWheel(DxWindow, DxWindow, e, new SharpDX.Point(mx, my));
             
             OnMouseWheel?.Invoke(sender, e);
         }
@@ -269,7 +269,7 @@ namespace GameOverlayExtension
             
             OnGraphicsSetup?.Invoke(sender, e);
             
-            g.Window.Hide();
+            Window.Hide();
 
             _graphicLoaded = true;
         }
@@ -319,19 +319,19 @@ namespace GameOverlayExtension
 
                                         if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Show)
                                         {
-                                            g.Window.Show();
-                                            g.Window.PlaceAbove(_targetWindowHandle);
-                                            g.Window.FitTo(_targetWindowHandle, true);
+                                            Window.Show();
+                                            Window.PlaceAbove(_targetWindowHandle);
+                                            Window.FitTo(_targetWindowHandle, true);
                                         }
 
                                         if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Hide)
-                                            g.Window.Hide();
+                                            Window.Hide();
 
                                         if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.OpacityChange)
                                         {
                                             CurrentOpacity = OpacityWhenTargetStateForeground;
-                                            g.Window.PlaceAbove(_targetWindowHandle);
-                                            g.Window.FitTo(_targetWindowHandle, true);
+                                            Window.PlaceAbove(_targetWindowHandle);
+                                            Window.FitTo(_targetWindowHandle, true);
                                         }
                                         else
                                             CurrentOpacity = 1f;
@@ -356,19 +356,19 @@ namespace GameOverlayExtension
 
                                         if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Show)
                                         {
-                                            g.Window.Show();
-                                            g.Window.PlaceAbove(_targetWindowHandle);
-                                            g.Window.FitTo(_targetWindowHandle, true);
+                                            Window.Show();
+                                            Window.PlaceAbove(_targetWindowHandle);
+                                            Window.FitTo(_targetWindowHandle, true);
                                         }
 
                                         if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Hide)
-                                            g.Window.Hide();
+                                            Window.Hide();
 
                                         if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.OpacityChange)
                                         {
                                             CurrentOpacity = OpacityWhenTargetStateBackground;
-                                            g.Window.PlaceAbove(_targetWindowHandle);
-                                            g.Window.FitTo(_targetWindowHandle, true);
+                                            Window.PlaceAbove(_targetWindowHandle);
+                                            Window.FitTo(_targetWindowHandle, true);
                                         }
                                         else
                                             CurrentOpacity = 1f;
@@ -394,19 +394,19 @@ namespace GameOverlayExtension
 
                                     if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Show)
                                     {
-                                        g.Window.Show();
-                                        g.Window.PlaceAbove(_targetWindowHandle);
-                                        g.Window.FitTo(_targetWindowHandle, true);
+                                        Window.Show();
+                                        Window.PlaceAbove(_targetWindowHandle);
+                                        Window.FitTo(_targetWindowHandle, true);
                                     }
 
                                     if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Hide)
-                                        g.Window.Hide();
+                                        Window.Hide();
 
                                     if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.OpacityChange)
                                     {
                                         CurrentOpacity = OpacityWhenTargetStateNone;
-                                        g.Window.PlaceAbove(_targetWindowHandle);
-                                        g.Window.FitTo(_targetWindowHandle, true);
+                                        Window.PlaceAbove(_targetWindowHandle);
+                                        Window.FitTo(_targetWindowHandle, true);
                                     }
                                     else
                                         CurrentOpacity = 1f;
@@ -424,13 +424,13 @@ namespace GameOverlayExtension
 
                             if (AttachToTargetMode == AttachToTargetModeEnum.Automatic)
                             {
-                                if (g.Window.IsVisible)
+                                if (Window.IsVisible)
                                 {
                                     if (_targetWindowHandle != IntPtr.Zero)
                                     {
-                                        g.Window.PlaceAbove(_targetWindowHandle);
+                                        Window.PlaceAbove(_targetWindowHandle);
 
-                                        g.Window.FitTo(_targetWindowHandle, true);
+                                        Window.FitTo(_targetWindowHandle, true);
                                     }
                                 }
                             }
@@ -547,16 +547,16 @@ namespace GameOverlayExtension
             if (!CurrentOpacity.CloseTo(1f))
             {
                 var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = CurrentOpacity };
-                g.Graphics.GetRenderTarget().PushLayer(ref lp, Layer);
+                e.Graphics.GetRenderTarget().PushLayer(ref lp, new Layer(e.Graphics.GetRenderTarget()));
                 layerUsed = true;
             }
             
-            g.DxWindow.Draw();
+            DxWindow.Draw(e.Graphics);
 
             OnDraw?.Invoke(sender, e);
 
             if(layerUsed)
-                g.Graphics.GetRenderTarget().PopLayer();
+                Window.Graphics.GetRenderTarget().PopLayer();
         }
 
         internal override void _window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
@@ -564,6 +564,11 @@ namespace GameOverlayExtension
             if (!Loaded) return;
 
             OnGraphicsDestroy?.Invoke(sender, e);
+        }
+        
+        private void _window_SizeChanged(object sender, OverlaySizeEventArgs e)
+        {
+            DxWindow.RefreshRect(Window.Width, Window.Height);
         }
 
         ~OverlayWrapper()

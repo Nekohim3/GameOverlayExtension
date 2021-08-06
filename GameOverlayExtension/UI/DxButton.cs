@@ -12,6 +12,7 @@ using SharpDX.DirectWrite;
 
 using Color = GameOverlay.Drawing.Color;
 using Font = GameOverlay.Drawing.Font;
+using Graphics = GameOverlay.Drawing.Graphics;
 using Point = SharpDX.Point;
 using SolidBrush = GameOverlay.Drawing.SolidBrush;
 using TextAntialiasMode = SharpDX.Direct2D1.TextAntialiasMode;
@@ -78,7 +79,7 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        public DxButton(string name, string text) : base(name)
+        public DxButton(GameOverlayExtension overlay, string name, string text) : base(overlay, name)
         {
             Width = 124;
             Height = 21;
@@ -87,31 +88,31 @@ namespace GameOverlayExtension.UI
             HorizontalContentAlignment = HorizontalAlignment.Center;
             BorderThickness = 1;
 
-            Fill = g.Graphics.CreateSolidBrush(8, 8, 13);
-            HoverFill = g.Graphics.CreateSolidBrush(8, 8, 13);
-            DownFill = g.Graphics.CreateSolidBrush(8, 8, 13);
-            Border = g.Graphics.CreateSolidBrush(6, 25, 37);
-            HoverBorder = g.Graphics.CreateSolidBrush(6, 25, 37);
-            DownBorder = g.Graphics.CreateSolidBrush(6, 25, 37);
-            FontBrush = g.Graphics.CreateSolidBrush(153, 176, 189);
-            Font = g.Graphics.CreateFont("museosanscyrl-500", 14);
+            Fill        = overlay.Window.Graphics.CreateSolidBrush(8, 8, 13);
+            HoverFill   = overlay.Window.Graphics.CreateSolidBrush(8,   8,   13);
+            DownFill    = overlay.Window.Graphics.CreateSolidBrush(8,   8,   13);
+            Border      = overlay.Window.Graphics.CreateSolidBrush(6,   25,  37);
+            HoverBorder = overlay.Window.Graphics.CreateSolidBrush(6,   25,  37);
+            DownBorder  = overlay.Window.Graphics.CreateSolidBrush(6,   25,  37);
+            FontBrush   = overlay.Window.Graphics.CreateSolidBrush(153, 176, 189);
+            Font        = overlay.Window.Graphics.CreateFont("museosanscyrl-500", 14);
         }
 
-        public override void Draw()
+        public override void Draw(Graphics graphics)
         {
             if (IsMouseOver)
             {
                 if (IsMouseDown)
-                    g.Graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
                 else
-                    g.Graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
             }
             else
-                g.Graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
 
-            g.Graphics.DrawText(Text, Font, FontBrush, null, Rect.X, Rect.Y - 1, Rect.Width, Rect.Height);
+            graphics.DrawText(Text, Font, FontBrush, null, Rect.X, Rect.Y - 1, Rect.Width, Rect.Height);
 
-            base.Draw();
+            base.Draw(graphics);
         }
 
         #endregion

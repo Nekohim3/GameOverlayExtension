@@ -68,17 +68,17 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        public override bool OnMouseMove(DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
+        public override bool OnMouseMove(DxWindow window, DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
         {
             if (!IntersectTest(pt.X, pt.Y))
             {
-                OnMouseLeave(ctl, args, pt);
+                OnMouseLeave(window, ctl, args, pt);
                 _currentHighlightItem = -1;
 
                 return false;
             }
 
-            OnMouseEnter(ctl, args, pt);
+            OnMouseEnter(window, ctl, args, pt);
 
             var f = false;
 
@@ -95,14 +95,14 @@ namespace GameOverlayExtension.UI
             return true;
         }
 
-        public override bool OnMouseDown(DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
+        public override bool OnMouseDown(DxWindow window, DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
         {
             if (!IntersectTest(pt.X, pt.Y) || !IsMouseOver)
             {
                 if (Active)
                 {
                     TopMost = false;
-                    g.Overlay.TopList.Remove(this);
+                    window.DrawOnTopList.Remove(this);
                 }
 
                 Active = false;
@@ -148,15 +148,15 @@ namespace GameOverlayExtension.UI
             TopMost = Active;
 
             if (Active && !oldActive)
-                g.DxWindow.DrawOnTopList.Add(this);
+                window.DrawOnTopList.Add(this);
             else if (!Active && oldActive)
-                g.DxWindow.DrawOnTopList.Remove(this);
+                window.DrawOnTopList.Remove(this);
 
 
             return true;
         }
 
-        public override bool OnMouseWheel(DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
+        public override bool OnMouseWheel(DxWindow window, DxControl ctl, MouseEventArgs args, SharpDX.Point pt)
         {
             if (!IntersectTest(pt.X, pt.Y)) return false;
             if (!IsMouseOver) return false;
@@ -175,30 +175,30 @@ namespace GameOverlayExtension.UI
             return false;
         }
 
-        public DxComboBox(string name) : base(name)
+        public DxComboBox(GameOverlayExtension overlay, string name) : base(overlay, name)
         {
-            Width = 150;
-            Height = 21;
-            Fill = g.Graphics.CreateSolidBrush(3, 5, 13);
-            HoverFill = g.Graphics.CreateSolidBrush(0, 11, 22);
-            ActiveFill = g.Graphics.CreateSolidBrush(3, 18, 33);
-            Border = g.Graphics.CreateSolidBrush(3, 23, 37);
-            HoverBorder = g.Graphics.CreateSolidBrush(3, 32, 51);
-            ActiveBorder = g.Graphics.CreateSolidBrush(3, 32, 51);
-            ActiveFontBrush = g.Graphics.CreateSolidBrush(242, 242, 242);
-            FontBrush = g.Graphics.CreateSolidBrush(153, 176, 189);
-            Separator = g.Graphics.CreateSolidBrush(3, 50, 70);
-            ScrollBarActive = g.Graphics.CreateSolidBrush(3, 168, 245);
-            ScrollBarFill = g.Graphics.CreateSolidBrush(23, 36, 46);
-            ItemOverHighlight = g.Graphics.CreateSolidBrush(5, 50, 70);
+            Width             = 150;
+            Height            = 21;
+            Fill              = overlay.Window.Graphics.CreateSolidBrush(3, 5, 13);
+            HoverFill         = overlay.Window.Graphics.CreateSolidBrush(0,   11,  22);
+            ActiveFill        = overlay.Window.Graphics.CreateSolidBrush(3,   18,  33);
+            Border            = overlay.Window.Graphics.CreateSolidBrush(3,   23,  37);
+            HoverBorder       = overlay.Window.Graphics.CreateSolidBrush(3,   32,  51);
+            ActiveBorder      = overlay.Window.Graphics.CreateSolidBrush(3,   32,  51);
+            ActiveFontBrush   = overlay.Window.Graphics.CreateSolidBrush(242, 242, 242);
+            FontBrush         = overlay.Window.Graphics.CreateSolidBrush(153, 176, 189);
+            Separator         = overlay.Window.Graphics.CreateSolidBrush(3,   50,  70);
+            ScrollBarActive   = overlay.Window.Graphics.CreateSolidBrush(3,   168, 245);
+            ScrollBarFill     = overlay.Window.Graphics.CreateSolidBrush(23,  36,  46);
+            ItemOverHighlight = overlay.Window.Graphics.CreateSolidBrush(5,   50,  70);
 
-            Font = g.Graphics.CreateFont("museosanscyrl-500", 13);
+            Font = overlay.Window.Graphics.CreateFont("museosanscyrl-500", 13);
 
             Items = new List<object>();
             SelectedIndexes = new List<int>() { };
         }
 
-        public override void Draw()
+        public override void Draw(Graphics graphics)
         {
             if (Active)
             {
@@ -207,62 +207,62 @@ namespace GameOverlayExtension.UI
                 else
                     Rect.Height = (_maxItemsVisible + 1) * 21 + 5;
 
-                g.Graphics.OutlineFillRectangle(ActiveBorder, ActiveFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
+                graphics.OutlineFillRectangle(ActiveBorder, ActiveFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
 
-                g.Graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
-                {
-                    ParagraphAlignment = ParagraphAlignment.Center,
-                    TextAntialiasMode = TextAntialiasMode.Grayscale,
-                    FontWeight = FontWeight.SemiBold
-                },
-                                    Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width - 17, 21);
+                graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
+                                  {
+                                          ParagraphAlignment = ParagraphAlignment.Center,
+                                          TextAntialiasMode = TextAntialiasMode.Grayscale,
+                                          FontWeight = FontWeight.SemiBold
+                                  },
+                                  Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width - 17, 21);
 
-                g.Graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
-                g.Graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
+                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
+                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
 
-                g.Graphics.FillRectangle(Separator, Rect.X, Rect.Y + 21, Rect.Width, 1); //separator
+                graphics.FillRectangle(Separator, Rect.X, Rect.Y + 21, Rect.Width, 1); //separator
 
                 for (var i = 0; i < (Items.Count > _maxItemsVisible ? _maxItemsVisible : Items.Count); i++)
                 {
                     if (_currentHighlightItem == i)
                     {
-                        g.Graphics.FillRectangle(ItemOverHighlight, Rect.X + 4, Rect.Y + 21 + i * 21, Rect.Width - 8 - (Items.Count <= _maxItemsVisible ? 0 : 9), 21);
+                        graphics.FillRectangle(ItemOverHighlight, Rect.X + 4, Rect.Y + 21 + i * 21, Rect.Width - 8 - (Items.Count <= _maxItemsVisible ? 0 : 9), 21);
                     }
-                    g.Graphics.DrawText(new TextHelper(Items[i + _currentPosition].ToString())
-                    {
-                        ParagraphAlignment = ParagraphAlignment.Center,
-                        TextAntialiasMode = TextAntialiasMode.Grayscale,
-                        FontWeight = FontWeight.SemiBold
-                    },
-                                        Font, SelectedIndexes.Contains(i + _currentPosition) ? ActiveFontBrush : FontBrush, null, Rect.X + 8, Rect.Y + 21 + i * 21, Rect.Width - 17, 21);
+                    graphics.DrawText(new TextHelper(Items[i + _currentPosition].ToString())
+                                      {
+                                              ParagraphAlignment = ParagraphAlignment.Center,
+                                              TextAntialiasMode = TextAntialiasMode.Grayscale,
+                                              FontWeight = FontWeight.SemiBold
+                                      },
+                                      Font, SelectedIndexes.Contains(i + _currentPosition) ? ActiveFontBrush : FontBrush, null, Rect.X + 8, Rect.Y + 21 + i * 21, Rect.Width - 17, 21);
                 }
 
                 if (Items.Count > _maxItemsVisible)
                 {
-                    g.Graphics.FillRectangle(ScrollBarFill, Rect.X + Rect.Width - 10, Rect.Y + 25, 3, Rect.Height - 29);
+                    graphics.FillRectangle(ScrollBarFill, Rect.X + Rect.Width - 10, Rect.Y + 25, 3, Rect.Height - 29);
 
                     var scrollHeight = Rect.Height - 29;
                     var scrollOnePieceHeight = scrollHeight / (float)Items.Count;
                     var scrollActiveHeight = scrollOnePieceHeight * 7;
-                    g.Graphics.FillRectangle(ScrollBarActive, Rect.X + Rect.Width - 10, Rect.Y + 25 + scrollOnePieceHeight * _currentPosition, 3, scrollActiveHeight);
+                    graphics.FillRectangle(ScrollBarActive, Rect.X + Rect.Width - 10, Rect.Y + 25 + scrollOnePieceHeight * _currentPosition, 3, scrollActiveHeight);
                 }
             }
             else
             {
                 Rect.Height = Height;
 
-                g.Graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
+                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
 
-                g.Graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
-                {
-                    ParagraphAlignment = ParagraphAlignment.Center,
-                    TextAntialiasMode = TextAntialiasMode.Grayscale,
-                    FontWeight = FontWeight.SemiBold
-                },
-                                    Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width, 21);
+                graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
+                                  {
+                                          ParagraphAlignment = ParagraphAlignment.Center,
+                                          TextAntialiasMode = TextAntialiasMode.Grayscale,
+                                          FontWeight = FontWeight.SemiBold
+                                  },
+                                  Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width, 21);
 
-                g.Graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
-                g.Graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
+                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
+                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
             }
 
             //base.Draw();

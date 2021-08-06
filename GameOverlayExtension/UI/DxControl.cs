@@ -27,11 +27,11 @@ namespace GameOverlayExtension.UI
         public event KeyEventHandler KeyDown;
         public event KeyEventHandler KeyUp;
 
-        public virtual bool OnMouseMove(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseMove(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (ClipToBonds && !IntersectTest(pt.X, pt.Y))
             {
-                RecursiveMouseLeave(ctl, args, pt);
+                RecursiveMouseLeave(window, ctl, args, pt);
 
                 return false;
             }
@@ -41,42 +41,42 @@ namespace GameOverlayExtension.UI
                 for (var i = Childs.Count - 1; i >= 0; i--)
                     if (!f)
                     {
-                        if (Childs[i].OnMouseMove(Childs[i], args, pt))
+                        if (Childs[i].OnMouseMove(window, Childs[i], args, pt))
                         {
                             f = true;
-                            OnMouseLeave(ctl, args, pt);
+                            OnMouseLeave(window, ctl, args, pt);
                         }
                     }
                     else
-                        Childs[i].OnMouseLeave(ctl, args, pt);
+                        Childs[i].OnMouseLeave(window, ctl, args, pt);
 
             if (f) return true;
 
             if (!ClipToBonds && !IntersectTest(pt.X, pt.Y))
             {
-                OnMouseLeave(ctl, args, pt);
+                OnMouseLeave(window, ctl, args, pt);
 
                 return false;
             }
 
             MouseMove?.Invoke(ctl, args, pt);
-            OnMouseEnter(ctl, args, pt);
+            OnMouseEnter(window, ctl, args, pt);
 
             return true;
         }
 
-        public virtual bool OnMouseDown(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseDown(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (Childs != null)
                 for (var i = Childs.Count - 1; i >= 0; i--)
-                    if (Childs[i].OnMouseDown(Childs[i], args, pt))
+                    if (Childs[i].OnMouseDown(window, Childs[i], args, pt))
                         return true;
 
             if (!IntersectTest(pt.X, pt.Y)) return false;
             if (!IsMouseOver) return false;
 
-            for (var i = g.Overlay.TopList.Count - 1; i >= 0; i--)
-                if (g.Overlay.TopList[i].IntersectTest(pt.X, pt.Y))
+            for (var i = window.DrawOnTopList.Count - 1; i >= 0; i--)
+                if (window.DrawOnTopList[i].IntersectTest(pt.X, pt.Y))
                     return false;
 
             IsMouseDown = true;
@@ -85,11 +85,11 @@ namespace GameOverlayExtension.UI
             return true;
         }
 
-        public virtual bool OnMouseUp(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseUp(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (Childs != null)
                 for (var i = Childs.Count - 1; i >= 0; i--)
-                    if (Childs[i].OnMouseUp(Childs[i], args, pt))
+                    if (Childs[i].OnMouseUp(window, Childs[i], args, pt))
                         return true;
 
             if (!IntersectTest(pt.X, pt.Y)) return false;
@@ -100,7 +100,7 @@ namespace GameOverlayExtension.UI
             return true;
         }
 
-        public virtual void OnMouseEnter(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual void OnMouseEnter(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (IsMouseOver) return;
 
@@ -108,7 +108,7 @@ namespace GameOverlayExtension.UI
             MouseEnter?.Invoke(ctl, args, pt);
         }
 
-        public virtual void OnMouseLeave(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual void OnMouseLeave(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (!IsMouseOver) return;
             IsMouseOver = false;
@@ -116,11 +116,11 @@ namespace GameOverlayExtension.UI
             MouseLeave?.Invoke(ctl, args, pt);
         }
 
-        public virtual bool OnMouseWheel(DxControl ctl, MouseEventArgs args, Point pt)
+        public virtual bool OnMouseWheel(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
             if (Childs != null)
                 for (var i = Childs.Count - 1; i >= 0; i--)
-                    if (Childs[i].OnMouseWheel(Childs[i], args, pt))
+                    if (Childs[i].OnMouseWheel(window, Childs[i], args, pt))
                         return true;
 
             if (!IntersectTest(pt.X, pt.Y)) return false;
@@ -131,13 +131,13 @@ namespace GameOverlayExtension.UI
             return true;
         }
 
-        public virtual bool OnKeyDown(DxControl ctl, KeyEventArgs args)
+        public virtual bool OnKeyDown(DxWindow window, DxControl ctl, KeyEventArgs args)
         {
             KeyDown?.Invoke(ctl, args);
             return true;
         }
 
-        public virtual bool OnKeyUp(DxControl ctl, KeyEventArgs args)
+        public virtual bool OnKeyUp(DxWindow window, DxControl ctl, KeyEventArgs args)
         {
             KeyUp?.Invoke(ctl, args);
             return true;
@@ -227,7 +227,7 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        protected DxControl(string name)
+        protected DxControl(GameOverlayExtension overlay, string name)
         {
             Name = name;
             ClipToBonds = true;
@@ -292,14 +292,14 @@ namespace GameOverlayExtension.UI
                     Childs[i].RefreshRect();
         }
 
-        protected void RecursiveMouseLeave(DxControl ctl, MouseEventArgs args, Point pt)
+        protected void RecursiveMouseLeave(DxWindow window, DxControl ctl, MouseEventArgs args, Point pt)
         {
-            ctl.OnMouseLeave(ctl, args, pt);
+            ctl.OnMouseLeave(window, ctl, args, pt);
 
             if (ctl.Childs == null) return;
 
             for (var i = ctl.Childs.Count - 1; i >= 0; i--)
-                ctl.Childs[i].RecursiveMouseLeave(ctl.Childs[i], args, pt);
+                ctl.Childs[i].RecursiveMouseLeave(window, ctl.Childs[i], args, pt);
         }
 
         public virtual void AddChild(DxControl ctl)
@@ -320,15 +320,15 @@ namespace GameOverlayExtension.UI
             Childs?.RemoveAt(i);
         }
 
-        public virtual void Draw()
+        public virtual void Draw(Graphics graphics)
         {
             if (Childs != null)
             {
                 var clipped = false;
-
+                
                 if (ClipToBonds)
                 {
-                    g.Graphics.ClipRegionStart(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height);
+                    graphics.ClipRegionStart(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height);
                     clipped = true;
                 }
 
@@ -336,20 +336,21 @@ namespace GameOverlayExtension.UI
 
                 if (!Opacity.CloseTo(1))
                 {
-                    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
-                    g.Graphics.GetRenderTarget().PushLayer(ref lp, g.Overlay.Layer);
+                    var lp    = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
+                    var layer = new Layer(graphics.GetRenderTarget());
+                    graphics.GetRenderTarget().PushLayer(ref lp, layer);
                     layerUsed = true;
                 }
 
                 for (var i = 0; i < Childs.Count; i++)
                     if (!Childs[i].TopMost)
-                        Childs[i].Draw();
+                        Childs[i].Draw(graphics);
 
                 if (layerUsed)
-                    g.Graphics.GetRenderTarget().PopLayer();
+                    graphics.GetRenderTarget().PopLayer();
 
                 if (clipped)
-                    g.Graphics.ClipRegionEnd();
+                    graphics.ClipRegionEnd();
             }
         }
 

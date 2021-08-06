@@ -60,9 +60,7 @@ namespace GameOverlayExtension
 
         public IKeyboardMouseEvents GHook;
         public bool                 UseHook;
-        public List<DxControl>      TopList = new List<DxControl>();
-
-        public Layer           Layer;
+        public DxWindow             DxWindow;
 
         internal bool         Loaded;
 
@@ -72,21 +70,19 @@ namespace GameOverlayExtension
 
         public virtual void Run()
         {
-            g.Overlay  = this;
-            g.Graphics = Window.Graphics;
-            g.Window   = Window;
+            // g.Overlay  = this;
+            // g.Graphics = Window.Graphics;
+            // g.Window   = Window;
             Window.Create();
 
-            while (!g.Graphics.IsInitialized)
+            while (!Window.Graphics.IsInitialized)
                 Thread.Sleep(10);
-            
-            Layer           = new Layer(g.Graphics.GetRenderTarget());
 
             if (UseHook)
                 StartHook();
 
-            g.Window.Deactivate();
-            g.DxWindow = new DxWindow("");
+            Window.Deactivate();
+            DxWindow = new DxWindow(this, "");
 
             Loaded = true;
         }

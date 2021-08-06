@@ -23,33 +23,33 @@ namespace GameOverlayExtension.UI
 
         #region Functions
 
-        public DxGrid(string name) : base(name)
+        public DxGrid(GameOverlayExtension overlay, string name) : base(overlay, name)
         {
             Width           = 100;
             Height          = 100;
             BorderThickness = 0;
 
-            Fill        = g.Graphics.CreateSolidBrush(0, 0, 0, 1);
-            HoverFill   = g.Graphics.CreateSolidBrush(0, 0, 0, 1);
-            DownFill    = g.Graphics.CreateSolidBrush(0, 0, 0, 1);
-            Border      = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
-            HoverBorder = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
-            DownBorder  = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
+            Fill        = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 1);
+            HoverFill   = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 1);
+            DownFill    = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 1);
+            Border      = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
+            HoverBorder = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
+            DownBorder  = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
         }
 
-        public override void Draw()
+        public override void Draw(Graphics graphics)
         {
             if (IsMouseOver)
             {
                 if (IsMouseDown)
-                    g.Graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
                 else
-                    g.Graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
             }
             else
-                g.Graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
 
-            base.Draw();
+            base.Draw(graphics);
         }
 
         #endregion

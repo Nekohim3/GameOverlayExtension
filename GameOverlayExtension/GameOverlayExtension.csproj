@@ -63,7 +63,6 @@
   <ItemGroup>
     <Compile Include="DoubleExtension.cs" />
     <Compile Include="FloatUtils.cs" />
-    <Compile Include="g.cs" />
     <Compile Include="GameOverlayExtension.cs" />
     <Compile Include="KeyboardHelper.cs" />
     <Compile Include="OverlayWrapper.cs" />
