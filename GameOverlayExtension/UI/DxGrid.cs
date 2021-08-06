@@ -35,13 +35,6 @@ namespace GameOverlayExtension.UI
             Border      = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
             HoverBorder = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
             DownBorder  = g.Graphics.CreateSolidBrush(0, 0, 0, 0);
-
-            Brushes.Add(Fill);
-            Brushes.Add(HoverFill);
-            Brushes.Add(DownFill);
-            Brushes.Add(Border);
-            Brushes.Add(HoverBorder);
-            Brushes.Add(DownBorder);
         }
 
         public override void Draw()

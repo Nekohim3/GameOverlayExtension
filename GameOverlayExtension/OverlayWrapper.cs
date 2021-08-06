@@ -77,9 +77,10 @@ namespace GameOverlayExtension
         private          IntPtr _foregroundWindowHandle;
         //private          string _foregroundWindowTitle;
 
-        private readonly AttachTarget           _attachTargetType;
+        private readonly AttachTargetEnum       _attachTargetType;
         private          TargetStateEnum        _targetState;
-        private          AttachToTargetModeEnum _attachToTargetMode;
+        
+        public           AttachToTargetModeEnum AttachToTargetMode { get; set; } = AttachToTargetModeEnum.Automatic;
 
         public AttachEventsRaiseTypeEnum       AttachEventsRaiseType            { get; set; }
         public ActionWhenTargetStateChangeEnum ActionWhenTargetStateForeground  { get; set; } = ActionWhenTargetStateChangeEnum.Show;
@@ -123,7 +124,7 @@ namespace GameOverlayExtension
             Window.DrawGraphics += _window_DrawGraphics;
         }
 
-        public OverlayWrapper(string p, AttachTarget target = AttachTarget.Process)
+        public OverlayWrapper(string p, AttachTargetEnum target = AttachTargetEnum.Process)
         {
             _currentProcessId = Process.GetCurrentProcess().Id;
             _attachTargetName = p;
@@ -175,6 +176,14 @@ namespace GameOverlayExtension
 
             if (e.Alt && e.KeyCode == Keys.LShiftKey)
                 KeyboardHelper.SwitchLang();
+
+            if (e.KeyCode == Keys.Insert)
+            {
+                if (g.Window.IsActivated)
+                    g.Window.Deactivate();
+                else
+                    g.Window.Activate();
+            }
             
 
             OnKeyDown?.Invoke(sender, e);
@@ -200,7 +209,8 @@ namespace GameOverlayExtension
             //    mx = (int)(mx / Scale.X);
             //    my = (int)(my / Scale.Y);
             //}
-            
+
+            g.DxWindow.OnMouseDown(g.DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseDown?.Invoke(sender, e);
         }
@@ -217,6 +227,7 @@ namespace GameOverlayExtension
             //    mx = (int)(mx / Scale.X);
             //    my = (int)(my / Scale.Y);
             //}
+            g.DxWindow.OnMouseUp(g.DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseUp?.Invoke(sender, e);
         }
@@ -234,7 +245,7 @@ namespace GameOverlayExtension
             //    my = (int)(my / Scale.Y);
             //}
 
-           
+            g.DxWindow.OnMouseMove(g.DxWindow, e, new SharpDX.Point(mx, my));
 
             OnMouseMove?.Invoke(sender, e);
         }
@@ -243,6 +254,11 @@ namespace GameOverlayExtension
         {
             if (!Loaded) return;
 
+            var mx = e.X - g.Overlay.Window.X;
+            var my = e.Y - g.Overlay.Window.Y;
+            
+            g.DxWindow.OnMouseWheel(g.DxWindow, e, new SharpDX.Point(mx, my));
+            
             OnMouseWheel?.Invoke(sender, e);
         }
 
@@ -269,7 +285,7 @@ namespace GameOverlayExtension
             {
                 if (_attachTargetName != "")
                 {
-                    if (_attachTargetType == AttachTarget.Process)
+                    if (_attachTargetType == AttachTargetEnum.Process)
                     {
                         var foregroundWindowHandle = User32.GetForegroundWindow();
 
@@ -286,9 +302,9 @@ namespace GameOverlayExtension
                                 {
                                     _targetWindowHandle = processes.First().MainWindowHandle;
 
-                                    if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                    if (AttachToTargetMode == AttachToTargetModeEnum.Manual)
                                     {
-                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.Foreground)
+                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.ChangeTargetState && _targetState != TargetStateEnum.Foreground)
                                             AttachEvent?.Invoke(TargetStateEnum.Foreground);
                                         else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
                                             AttachEvent?.Invoke(TargetStateEnum.Foreground);
@@ -296,7 +312,7 @@ namespace GameOverlayExtension
 
                                     _targetState = TargetStateEnum.Foreground;
 
-                                    if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
+                                    if (AttachToTargetMode == AttachToTargetModeEnum.Automatic)
                                     {
                                         if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.Exit)
                                             Process.GetCurrentProcess().Kill(); //Поменять
@@ -323,9 +339,9 @@ namespace GameOverlayExtension
                                 }
                                 else
                                 {
-                                    if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                    if (AttachToTargetMode == AttachToTargetModeEnum.Manual)
                                     {
-                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.Background)
+                                        if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.ChangeTargetState && _targetState != TargetStateEnum.Background)
                                             AttachEvent?.Invoke(TargetStateEnum.Background);
                                         else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
                                             AttachEvent?.Invoke(TargetStateEnum.Background);
@@ -333,7 +349,7 @@ namespace GameOverlayExtension
 
                                     _targetState = TargetStateEnum.Background;
 
-                                    if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
+                                    if (AttachToTargetMode == AttachToTargetModeEnum.Automatic)
                                     {
                                         if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.Exit)
                                             Process.GetCurrentProcess().Kill(); //Поменять
@@ -361,9 +377,9 @@ namespace GameOverlayExtension
                             }
                             else
                             {
-                                if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                if (AttachToTargetMode == AttachToTargetModeEnum.Manual)
                                 {
-                                    if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.OnChangeTargetState && _targetState != TargetStateEnum.None)
+                                    if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.ChangeTargetState && _targetState != TargetStateEnum.None)
                                         AttachEvent?.Invoke(TargetStateEnum.None);
                                     else if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
                                         AttachEvent?.Invoke(TargetStateEnum.None);
@@ -371,7 +387,7 @@ namespace GameOverlayExtension
 
                                 _targetState = TargetStateEnum.None;
 
-                                if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                                if (AttachToTargetMode == AttachToTargetModeEnum.Manual)
                                 {
                                     if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.Exit)
                                         Process.GetCurrentProcess().Kill(); //Поменять
@@ -402,11 +418,11 @@ namespace GameOverlayExtension
                         else
                         {
                             //not change
-                            if (_attachToTargetMode == AttachToTargetModeEnum.Manual)
+                            if (AttachToTargetMode == AttachToTargetModeEnum.Manual)
                                 if (AttachEventsRaiseType == AttachEventsRaiseTypeEnum.Always)
                                     AttachEvent?.Invoke(TargetStateEnum.None);
 
-                            if (_attachToTargetMode == AttachToTargetModeEnum.Automatic)
+                            if (AttachToTargetMode == AttachToTargetModeEnum.Automatic)
                             {
                                 if (g.Window.IsVisible)
                                 {
@@ -531,9 +547,11 @@ namespace GameOverlayExtension
             if (!CurrentOpacity.CloseTo(1f))
             {
                 var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = CurrentOpacity };
-                g.Graphics.GetRenderTarget().PushLayer(ref lp, _layer);
+                g.Graphics.GetRenderTarget().PushLayer(ref lp, Layer);
                 layerUsed = true;
             }
+            
+            g.DxWindow.Draw();
 
             OnDraw?.Invoke(sender, e);
 
@@ -554,7 +572,7 @@ namespace GameOverlayExtension
         }
     }
 
-    public enum AttachTarget
+    public enum AttachTargetEnum
     {
         Process,
         Window
@@ -576,7 +594,7 @@ namespace GameOverlayExtension
     public enum AttachEventsRaiseTypeEnum
     {
         Always,
-        OnChangeTargetState
+        ChangeTargetState
     }
 
     public enum ActionWhenTargetStateChangeEnum

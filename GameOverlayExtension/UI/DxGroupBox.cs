@@ -49,11 +49,6 @@ namespace GameOverlayExtension.UI
 
             HeaderFont = g.Graphics.CreateFont("museosanscyrl-900", 15);
 
-            Brushes.Add(Fill);
-            Brushes.Add(Border);
-            Brushes.Add(Separator);
-            Brushes.Add(Header);
-
             var grid = new DxGrid($"{name}>Grid")
             {
                 Parent = this,

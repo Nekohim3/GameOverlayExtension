@@ -95,17 +95,6 @@ namespace GameOverlayExtension.UI
             DownBorder = g.Graphics.CreateSolidBrush(6, 25, 37);
             FontBrush = g.Graphics.CreateSolidBrush(153, 176, 189);
             Font = g.Graphics.CreateFont("museosanscyrl-500", 14);
-
-            Brushes = new List<IBrush>
-            {
-                Fill,
-                HoverFill,
-                DownFill,
-                Border,
-                HoverBorder,
-                DownBorder,
-                FontBrush
-            };
         }
 
         public override void Draw()

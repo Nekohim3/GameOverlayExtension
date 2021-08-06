@@ -17,6 +17,8 @@ namespace GameOverlayExtension.UI
 {
     public class DxComboBox : DxControl
     {
+        
+        //todo: Добавить эвент на изменение выбранного итема
         public new List<DxControl> Childs => null;
 
         #region Variables
@@ -146,9 +148,9 @@ namespace GameOverlayExtension.UI
             TopMost = Active;
 
             if (Active && !oldActive)
-                g.Overlay.TopList.Add(this);
+                g.DxWindow.DrawOnTopList.Add(this);
             else if (!Active && oldActive)
-                g.Overlay.TopList.Remove(this);
+                g.DxWindow.DrawOnTopList.Remove(this);
 
 
             return true;
@@ -191,19 +193,6 @@ namespace GameOverlayExtension.UI
             ItemOverHighlight = g.Graphics.CreateSolidBrush(5, 50, 70);
 
             Font = g.Graphics.CreateFont("museosanscyrl-500", 13);
-
-            Brushes.Add(Fill);
-            Brushes.Add(HoverFill);
-            Brushes.Add(ActiveFill);
-            Brushes.Add(Border);
-            Brushes.Add(HoverBorder);
-            Brushes.Add(ActiveBorder);
-            Brushes.Add(FontBrush);
-            Brushes.Add(ActiveFontBrush);
-            Brushes.Add(Separator);
-            Brushes.Add(ScrollBarActive);
-            Brushes.Add(ScrollBarFill);
-            Brushes.Add(ItemOverHighlight);
 
             Items = new List<object>();
             SelectedIndexes = new List<int>() { };

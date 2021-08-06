@@ -62,7 +62,7 @@ namespace GameOverlayExtension
         public bool                 UseHook;
         public List<DxControl>      TopList = new List<DxControl>();
 
-        protected Layer           _layer;
+        public Layer           Layer;
 
         internal bool         Loaded;
 
@@ -80,7 +80,7 @@ namespace GameOverlayExtension
             while (!g.Graphics.IsInitialized)
                 Thread.Sleep(10);
             
-            _layer           = new Layer(g.Graphics.GetRenderTarget());
+            Layer           = new Layer(g.Graphics.GetRenderTarget());
 
             if (UseHook)
                 StartHook();

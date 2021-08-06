@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Forms;
 using GameOverlay.Drawing;
+
+using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
+
 using Point = SharpDX.Point;
 
 namespace GameOverlayExtension.UI
@@ -150,8 +154,6 @@ namespace GameOverlayExtension.UI
         private VerticalAlignment _verticalAlignment;
         private float _opacity;
 
-        protected List<IBrush> Brushes;
-
         public DxControl Parent { get; set; }
         public List<DxControl> Childs { get; set; }
         public bool ClipToBonds { get; set; }
@@ -218,14 +220,6 @@ namespace GameOverlayExtension.UI
             set
             {
                 _opacity = value;
-
-                if (_opacity > 1f)
-                    _opacity = 1f;
-
-                if (_opacity < 0f)
-                    _opacity = 0f;
-
-                RecursiveSetOpacity(_opacity);
             }
         }
 
@@ -245,19 +239,7 @@ namespace GameOverlayExtension.UI
             _horizontalAlignment = HorizontalAlignment.Left;
             _verticalAlignment = VerticalAlignment.Top;
             Childs = new List<DxControl>();
-            Brushes = new List<IBrush>();
             RefreshRect();
-        }
-
-        private void RecursiveSetOpacity(float op)
-        {
-            if (Brushes != null)
-                for (var i = 0; i < Brushes.Count; i++)
-                    Brushes[i].Brush.Opacity = op;
-
-            if (Childs != null)
-                for (var index = 0; index < Childs.Count; index++)
-                    Childs[index].RecursiveSetOpacity(op);
         }
 
         protected void RefreshRect()
@@ -340,21 +322,35 @@ namespace GameOverlayExtension.UI
 
         public virtual void Draw()
         {
-            var clipped = false;
-            if (ClipToBonds)
-            {
-                g.Graphics.ClipRegionStart(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height);
-                clipped = true;
-            }
-
-
             if (Childs != null)
+            {
+                var clipped = false;
+
+                if (ClipToBonds)
+                {
+                    g.Graphics.ClipRegionStart(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height);
+                    clipped = true;
+                }
+
+                var layerUsed = false;
+
+                if (!Opacity.CloseTo(1))
+                {
+                    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
+                    g.Graphics.GetRenderTarget().PushLayer(ref lp, g.Overlay.Layer);
+                    layerUsed = true;
+                }
+
                 for (var i = 0; i < Childs.Count; i++)
                     if (!Childs[i].TopMost)
                         Childs[i].Draw();
 
-            if (clipped)
-                g.Graphics.ClipRegionEnd();
+                if (layerUsed)
+                    g.Graphics.GetRenderTarget().PopLayer();
+
+                if (clipped)
+                    g.Graphics.ClipRegionEnd();
+            }
         }
 
         public virtual bool IntersectTest(int x, int y)
