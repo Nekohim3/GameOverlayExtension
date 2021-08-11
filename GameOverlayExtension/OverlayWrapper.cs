@@ -116,6 +116,7 @@ namespace GameOverlayExtension
                 Y = SystemInformation.VirtualScreen.Y,
                 Width = SystemInformation.VirtualScreen.Width,
                 Height = SystemInformation.VirtualScreen.Height,
+                FPS = 60
             };
 
             Window.SetupGraphics += _window_SetupGraphics;
@@ -136,7 +137,8 @@ namespace GameOverlayExtension
                 TextAntiAliasing = true,
                 UseMultiThreadedFactories = false,
                 VSync = false,
-                WindowHandle = IntPtr.Zero
+                WindowHandle = IntPtr.Zero,
+                
             };
 
             Window = new GraphicsWindow(graphics)
@@ -184,6 +186,8 @@ namespace GameOverlayExtension
                     Window.Deactivate();
                 else
                     Window.Activate();
+                Window.BringToFront();
+                
             }
             
 
@@ -542,12 +546,11 @@ namespace GameOverlayExtension
 
             e.Graphics.ClearScene();
 
-            var layerUsed = false;
-
+            var   layerUsed = false;
             if (!CurrentOpacity.CloseTo(1f))
             {
                 var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = CurrentOpacity };
-                e.Graphics.GetRenderTarget().PushLayer(ref lp, new Layer(e.Graphics.GetRenderTarget()));
+                e.Graphics.AddOpacity(lp);
                 layerUsed = true;
             }
             
@@ -555,8 +558,8 @@ namespace GameOverlayExtension
 
             OnDraw?.Invoke(sender, e);
 
-            if(layerUsed)
-                Window.Graphics.GetRenderTarget().PopLayer();
+            if (layerUsed)
+                e.Graphics.RemoveOpacity();
         }
 
         internal override void _window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)

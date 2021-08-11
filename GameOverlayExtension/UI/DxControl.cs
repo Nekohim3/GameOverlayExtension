@@ -332,13 +332,11 @@ namespace GameOverlayExtension.UI
                     clipped = true;
                 }
 
-                var layerUsed = false;
-
+                var   layerUsed = false;
                 if (!Opacity.CloseTo(1))
                 {
-                    var lp    = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
-                    var layer = new Layer(graphics.GetRenderTarget());
-                    graphics.GetRenderTarget().PushLayer(ref lp, layer);
+                    var lp = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
+                    graphics.AddOpacity(lp);
                     layerUsed = true;
                 }
 
@@ -347,7 +345,7 @@ namespace GameOverlayExtension.UI
                         Childs[i].Draw(graphics);
 
                 if (layerUsed)
-                    graphics.GetRenderTarget().PopLayer();
+                    graphics.RemoveOpacity();
 
                 if (clipped)
                     graphics.ClipRegionEnd();
