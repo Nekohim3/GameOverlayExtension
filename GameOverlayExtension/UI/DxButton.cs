@@ -98,21 +98,24 @@ namespace GameOverlayExtension.UI
             Font        = overlay.Window.Graphics.CreateFont("museosanscyrl-500", 14);
         }
 
-        public override void Draw(Graphics graphics)
+        public override void Draw(Graphics graphics, Action action = null)
         {
-            if (IsMouseOver)
+            action = () =>
             {
-                if (IsMouseDown)
-                    graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                if (IsMouseOver)
+                {
+                    if (IsMouseDown)
+                        graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    else
+                        graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                }
                 else
-                    graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            }
-            else
-                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
 
-            graphics.DrawText(Text, Font, FontBrush, null, Rect.X, Rect.Y - 1, Rect.Width, Rect.Height);
+                graphics.DrawText(Text, Font, FontBrush, null, Rect.X, Rect.Y - 1, Rect.Width, Rect.Height);
+            };
 
-            base.Draw(graphics);
+            base.Draw(graphics, action);
         }
 
         #endregion

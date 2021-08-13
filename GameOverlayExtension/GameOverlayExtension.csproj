@@ -73,6 +73,7 @@
     <Compile Include="UI\DxListBox.cs" />
     <Compile Include="UI\DxRadio.cs" />
     <Compile Include="UI\DxSlider.cs" />
+    <Compile Include="UI\DxStackPanel.cs" />
     <Compile Include="UI\DxTextBox.cs" />
     <Compile Include="UI\DxToggle.cs" />
     <Compile Include="UI\DxWindow.cs" />

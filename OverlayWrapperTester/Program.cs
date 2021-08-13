@@ -60,13 +60,13 @@ namespace OverlayWrapperTester
             g.DxWindow = g.Overlay.DxWindow;
             g.Overlay.Run();
 
-            g.Overlay.AttachToTargetMode               =  AttachToTargetModeEnum.Automatic;
-            g.Overlay.AttachEventsRaiseType            =  AttachEventsRaiseTypeEnum.ChangeTargetState;
-            g.Overlay.ActionWhenTargetStateBackground  =  ActionWhenTargetStateChangeEnum.OpacityChange;
-            g.Overlay.ActionWhenTargetStateForeground  =  ActionWhenTargetStateChangeEnum.Show;
-            g.Overlay.ActionWhenTargetStateNone        =  ActionWhenTargetStateChangeEnum.Exit;
-            g.Overlay.OpacityWhenTargetStateBackground =  0.5f;
-
+            g.Overlay.AttachToTargetMode               = AttachToTargetModeEnum.Automatic;
+            g.Overlay.AttachEventsRaiseType            = AttachEventsRaiseTypeEnum.ChangeTargetState;
+            g.Overlay.ActionWhenTargetStateBackground  = ActionWhenTargetStateChangeEnum.OpacityChange;
+            g.Overlay.ActionWhenTargetStateForeground  = ActionWhenTargetStateChangeEnum.Show;
+            g.Overlay.ActionWhenTargetStateNone        = ActionWhenTargetStateChangeEnum.Exit;
+            g.Overlay.OpacityWhenTargetStateBackground = 0.5f;
+            
             var dxComboBoxSingle = new DxComboBox(g.Overlay, "dxComboBoxSingle") { MultiSelect = false, Margin = new Thickness(50, 50, 0, 0) };
             dxComboBoxSingle.Items.Add("Test0");
             dxComboBoxSingle.Items.Add("Test1");
@@ -100,7 +100,7 @@ namespace OverlayWrapperTester
                 dxButton.Text.Text = counter++.ToString();
             };
 
-            var dxGroupBox = new DxGroupBox(g.Overlay, "dxGroupBox", "Test groupBox") { Width = 300, Height = 150, Margin = new Thickness(50, 200, 0, 0) };
+            var dxGroupBox = new DxGroupBox(g.Overlay, "dxGroupBox", "Test groupBox") { Width = 300, Height = 150, Margin = new Thickness(50, 200, 0, 0)};
             dxGroupBox.AddChild(dxButton);
             g.Overlay.DxWindow.AddChild(dxGroupBox);
 
@@ -129,12 +129,11 @@ namespace OverlayWrapperTester
         private static void Overlay_OnDraw(object sender, DrawGraphicsEventArgs e)
         {
 
-
         }
 
         private static void Overlay_OnKeyDown(object sender, KeyEventArgs e)
         {
-
+            
         }
 
         private static void Overlay_OnKeyUp(object sender, KeyEventArgs e)

@@ -33,10 +33,13 @@ namespace GameOverlayExtension.UI
             DrawOnTopList   = new List<DxControl>();
         }
 
-        public override void Draw(Graphics graphics)
+        public override void Draw(Graphics graphics, Action action = null)
         {
-            graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            base.Draw(graphics);
+            action = () =>
+            {
+                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+            };
+            base.Draw(graphics, action);
 
             for (var i = 0; i < DrawOnTopList.Count; i++)
                 DrawOnTopList[i].Draw(graphics);

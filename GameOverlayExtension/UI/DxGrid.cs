@@ -37,19 +37,21 @@ namespace GameOverlayExtension.UI
             DownBorder  = overlay.Window.Graphics.CreateSolidBrush(0, 0, 0, 0);
         }
 
-        public override void Draw(Graphics graphics)
+        public override void Draw(Graphics graphics, Action action)
         {
-            if (IsMouseOver)
+            action = () =>
             {
-                if (IsMouseDown)
-                    graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                if (IsMouseOver)
+                {
+                    if (IsMouseDown)
+                        graphics.OutlineFillRectangle(DownBorder, DownFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                    else
+                        graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                }
                 else
-                    graphics.OutlineFillRectangle(HoverBorder, HoverFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            }
-            else
-                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-
-            base.Draw(graphics);
+                    graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+            };
+            base.Draw(graphics, action);
         }
 
         #endregion

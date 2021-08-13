@@ -19,7 +19,7 @@ using SharpDX.Direct2D1;
 
 namespace GameOverlayExtension
 {
-    public abstract class GameOverlayExtension
+    public abstract class GameOverlayExtension : IDisposable
     {
         #region events
 
@@ -171,9 +171,9 @@ namespace GameOverlayExtension
 
         internal abstract void _window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e);
 
-        ~GameOverlayExtension()
+        public virtual void Dispose()
         {
-            Window.Dispose();
+            StopHook();
         }
     }
 }

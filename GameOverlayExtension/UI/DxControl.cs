@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using GameOverlay.Drawing;
 
@@ -320,7 +321,7 @@ namespace GameOverlayExtension.UI
             Childs?.RemoveAt(i);
         }
 
-        public virtual void Draw(Graphics graphics)
+        public virtual void Draw(Graphics graphics, Action action = null)
         {
             if (Childs != null)
             {
@@ -332,23 +333,26 @@ namespace GameOverlayExtension.UI
                     clipped = true;
                 }
 
-                var   layerUsed = false;
+                var layerUsed = false;
                 if (!Opacity.CloseTo(1))
                 {
                     var lp = new LayerParameters() { ContentBounds = new RawRectangleF(Rect.X, Rect.Y, Rect.X + Rect.Width, Rect.Y + Rect.Height), Opacity = Opacity };
-                    graphics.AddOpacity(lp);
+                    graphics.LayerHelper.AddOpacity(lp);
                     layerUsed = true;
                 }
+
+                action?.Invoke();
 
                 for (var i = 0; i < Childs.Count; i++)
                     if (!Childs[i].TopMost)
                         Childs[i].Draw(graphics);
 
                 if (layerUsed)
-                    graphics.RemoveOpacity();
+                    graphics.LayerHelper.RemoveOpacity();
 
                 if (clipped)
                     graphics.ClipRegionEnd();
+                
             }
         }
 
@@ -358,6 +362,7 @@ namespace GameOverlayExtension.UI
         }
 
         #endregion
+
     }
 
     public struct Thickness

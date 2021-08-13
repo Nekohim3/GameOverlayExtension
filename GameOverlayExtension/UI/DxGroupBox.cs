@@ -61,12 +61,15 @@ namespace GameOverlayExtension.UI
             base.AddChild(grid);
         }
 
-        public override void Draw(Graphics graphics)
+        public override void Draw(Graphics graphics, Action action = null)
         {
-            graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
-            graphics.FillRectangle(Separator, Rect.X + 5, Rect.Y + 30, Rect.Width - 10, 2);
-            graphics.DrawText(Text, HeaderFont, Header, null, Rect.X + 10, Rect.Y, Rect.Width - 10, 30);
-            base.Draw(graphics);
+            action = () =>
+            {
+                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, BorderThickness, 0);
+                graphics.FillRectangle(Separator, Rect.X                 + 5, Rect.Y              + 30, Rect.Width - 10, 2);
+                graphics.DrawText(Text, HeaderFont, Header, null, Rect.X + 10, Rect.Y, Rect.Width - 10, 30);
+            };
+            base.Draw(graphics, action);
         }
 
         public override void AddChild(DxControl ctl)

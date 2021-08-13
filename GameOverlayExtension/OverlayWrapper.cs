@@ -57,7 +57,7 @@ namespace GameOverlayExtension
 
         public event AppExitHandler AppExit;
 
-        public virtual void OnAppExit()
+        public void OnAppExit()
         {
             AppExit?.Invoke();
         }
@@ -333,6 +333,7 @@ namespace GameOverlayExtension
 
                                         if (ActionWhenTargetStateForeground == ActionWhenTargetStateChangeEnum.OpacityChange)
                                         {
+                                            Window.Show();
                                             CurrentOpacity = OpacityWhenTargetStateForeground;
                                             Window.PlaceAbove(_targetWindowHandle);
                                             Window.FitTo(_targetWindowHandle, true);
@@ -370,6 +371,7 @@ namespace GameOverlayExtension
 
                                         if (ActionWhenTargetStateBackground == ActionWhenTargetStateChangeEnum.OpacityChange)
                                         {
+                                            Window.Show();
                                             CurrentOpacity = OpacityWhenTargetStateBackground;
                                             Window.PlaceAbove(_targetWindowHandle);
                                             Window.FitTo(_targetWindowHandle, true);
@@ -408,6 +410,7 @@ namespace GameOverlayExtension
 
                                     if (ActionWhenTargetStateNone == ActionWhenTargetStateChangeEnum.OpacityChange)
                                     {
+                                        Window.Show();
                                         CurrentOpacity = OpacityWhenTargetStateNone;
                                         Window.PlaceAbove(_targetWindowHandle);
                                         Window.FitTo(_targetWindowHandle, true);
@@ -440,7 +443,12 @@ namespace GameOverlayExtension
                             }
                         }
                     }
-                    else { }
+
+                    if (_attachTargetType == AttachTargetEnum.Window)
+                    {
+                        
+                    }
+                    
                 }
             }
             catch (Exception exception) { }
@@ -546,11 +554,11 @@ namespace GameOverlayExtension
 
             e.Graphics.ClearScene();
 
-            var   layerUsed = false;
+            var layerUsed = false;
             if (!CurrentOpacity.CloseTo(1f))
             {
                 var lp = new LayerParameters() { ContentBounds = new RawRectangleF(0, 0, Window.Width, Window.Height), Opacity = CurrentOpacity };
-                e.Graphics.AddOpacity(lp);
+                e.Graphics.LayerHelper.AddOpacity(lp);
                 layerUsed = true;
             }
             
@@ -558,8 +566,8 @@ namespace GameOverlayExtension
 
             OnDraw?.Invoke(sender, e);
 
-            if (layerUsed)
-                e.Graphics.RemoveOpacity();
+            if (layerUsed) 
+                e.Graphics.LayerHelper.RemoveOpacity();
         }
 
         internal override void _window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
@@ -568,15 +576,27 @@ namespace GameOverlayExtension
 
             OnGraphicsDestroy?.Invoke(sender, e);
         }
-        
+
+        public override void Dispose()
+        {
+            Window.Dispose();
+            DxWindow          = null;
+            OnDraw            = null;
+            OnPreDraw         = null;
+            OnGraphicsSetup   = null;
+            OnGraphicsDestroy = null;
+            OnKeyDown         = null;
+            OnKeyUp           = null;
+            OnMouseDown       = null;
+            OnMouseUp         = null;
+            OnMouseMove       = null;
+            OnMouseWheel      = null;
+            base.Dispose();
+        }
+
         private void _window_SizeChanged(object sender, OverlaySizeEventArgs e)
         {
             DxWindow.RefreshRect(Window.Width, Window.Height);
-        }
-
-        ~OverlayWrapper()
-        {
-            Window.Dispose();
         }
     }
 

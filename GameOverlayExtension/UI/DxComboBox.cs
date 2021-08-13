@@ -19,7 +19,7 @@ namespace GameOverlayExtension.UI
     {
         
         //todo: Добавить эвент на изменение выбранного итема
-        public new List<DxControl> Childs => null;
+        public List<DxControl> Childs => null;
 
         #region Variables
 
@@ -198,74 +198,78 @@ namespace GameOverlayExtension.UI
             SelectedIndexes = new List<int>() { };
         }
 
-        public override void Draw(Graphics graphics)
+        public override void Draw(Graphics graphics, Action action = null)
         {
-            if (Active)
+            action = () =>
             {
-                if (Items.Count < _maxItemsVisible)
-                    Rect.Height = (Items.Count + 1) * 21 + 5;
-                else
-                    Rect.Height = (_maxItemsVisible + 1) * 21 + 5;
-
-                graphics.OutlineFillRectangle(ActiveBorder, ActiveFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
-
-                graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
-                                  {
-                                          ParagraphAlignment = ParagraphAlignment.Center,
-                                          TextAntialiasMode = TextAntialiasMode.Grayscale,
-                                          FontWeight = FontWeight.SemiBold
-                                  },
-                                  Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width - 17, 21);
-
-                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
-                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
-
-                graphics.FillRectangle(Separator, Rect.X, Rect.Y + 21, Rect.Width, 1); //separator
-
-                for (var i = 0; i < (Items.Count > _maxItemsVisible ? _maxItemsVisible : Items.Count); i++)
+                if (Active)
                 {
-                    if (_currentHighlightItem == i)
-                    {
-                        graphics.FillRectangle(ItemOverHighlight, Rect.X + 4, Rect.Y + 21 + i * 21, Rect.Width - 8 - (Items.Count <= _maxItemsVisible ? 0 : 9), 21);
-                    }
-                    graphics.DrawText(new TextHelper(Items[i + _currentPosition].ToString())
+                    if (Items.Count < _maxItemsVisible)
+                        Rect.Height = (Items.Count + 1) * 21 + 5;
+                    else
+                        Rect.Height = (_maxItemsVisible + 1) * 21 + 5;
+
+                    graphics.OutlineFillRectangle(ActiveBorder, ActiveFill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
+
+                    graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
                                       {
                                               ParagraphAlignment = ParagraphAlignment.Center,
-                                              TextAntialiasMode = TextAntialiasMode.Grayscale,
-                                              FontWeight = FontWeight.SemiBold
+                                              TextAntialiasMode  = TextAntialiasMode.Grayscale,
+                                              FontWeight         = FontWeight.SemiBold
                                       },
-                                      Font, SelectedIndexes.Contains(i + _currentPosition) ? ActiveFontBrush : FontBrush, null, Rect.X + 8, Rect.Y + 21 + i * 21, Rect.Width - 17, 21);
-                }
+                                      Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width - 17, 21);
 
-                if (Items.Count > _maxItemsVisible)
+                    graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5,  Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
+                    graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
+
+                    graphics.FillRectangle(Separator, Rect.X, Rect.Y + 21, Rect.Width, 1); //separator
+
+                    for (var i = 0; i < (Items.Count > _maxItemsVisible ? _maxItemsVisible : Items.Count); i++)
+                    {
+                        if (_currentHighlightItem == i)
+                        {
+                            graphics.FillRectangle(ItemOverHighlight, Rect.X + 4, Rect.Y + 21 + i * 21, Rect.Width - 8 - (Items.Count <= _maxItemsVisible ? 0 : 9), 21);
+                        }
+
+                        graphics.DrawText(new TextHelper(Items[i + _currentPosition].ToString())
+                                          {
+                                                  ParagraphAlignment = ParagraphAlignment.Center,
+                                                  TextAntialiasMode  = TextAntialiasMode.Grayscale,
+                                                  FontWeight         = FontWeight.SemiBold
+                                          },
+                                          Font, SelectedIndexes.Contains(i + _currentPosition) ? ActiveFontBrush : FontBrush, null, Rect.X + 8, Rect.Y + 21 + i * 21, Rect.Width - 17, 21);
+                    }
+
+                    if (Items.Count > _maxItemsVisible)
+                    {
+                        graphics.FillRectangle(ScrollBarFill, Rect.X + Rect.Width - 10, Rect.Y + 25, 3, Rect.Height - 29);
+
+                        var scrollHeight         = Rect.Height - 29;
+                        var scrollOnePieceHeight = scrollHeight         / (float)Items.Count;
+                        var scrollActiveHeight   = scrollOnePieceHeight * 7;
+                        graphics.FillRectangle(ScrollBarActive, Rect.X + Rect.Width - 10, Rect.Y + 25 + scrollOnePieceHeight * _currentPosition, 3, scrollActiveHeight);
+                    }
+                }
+                else
                 {
-                    graphics.FillRectangle(ScrollBarFill, Rect.X + Rect.Width - 10, Rect.Y + 25, 3, Rect.Height - 29);
+                    Rect.Height = Height;
 
-                    var scrollHeight = Rect.Height - 29;
-                    var scrollOnePieceHeight = scrollHeight / (float)Items.Count;
-                    var scrollActiveHeight = scrollOnePieceHeight * 7;
-                    graphics.FillRectangle(ScrollBarActive, Rect.X + Rect.Width - 10, Rect.Y + 25 + scrollOnePieceHeight * _currentPosition, 3, scrollActiveHeight);
+                    graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
+
+                    graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
+                                      {
+                                              ParagraphAlignment = ParagraphAlignment.Center,
+                                              TextAntialiasMode  = TextAntialiasMode.Grayscale,
+                                              FontWeight         = FontWeight.SemiBold
+                                      },
+                                      Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width, 21);
+
+                    graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5,  Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
+                    graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
                 }
-            }
-            else
-            {
-                Rect.Height = Height;
+            };
 
-                graphics.OutlineFillRectangle(Border, Fill, Rect.X, Rect.Y, Rect.Width, Rect.Height, 1, 0);
-
-                graphics.DrawText(new TextHelper(SelectedItems.Cast<string>().Aggregate("", (current, item) => current + $"{item},").TrimEnd(','))
-                                  {
-                                          ParagraphAlignment = ParagraphAlignment.Center,
-                                          TextAntialiasMode = TextAntialiasMode.Grayscale,
-                                          FontWeight = FontWeight.SemiBold
-                                  },
-                                  Font, ActiveFontBrush, null, Rect.X + 4, Rect.Y - 1, Rect.Width, 21);
-
-                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 5, Rect.Y + 8), new Point(Rect.X + Rect.Width - 9, Rect.Y + 12), 2); //arrow
-                graphics.DrawLine(ActiveFontBrush, new Point(Rect.X + Rect.Width - 12, Rect.Y + 8), new Point(Rect.X + Rect.Width - 8, Rect.Y + 12), 2); //arrow
-            }
-
-            //base.Draw();
+            base.Draw(graphics, action);
         }
 
         public override void AddChild(DxControl ctl)
